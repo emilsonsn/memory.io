@@ -25,10 +25,10 @@ return new class extends Migration
         });
 
         Schema::create('category_memory', function (Blueprint $table) {
-            $table->uuid('id')->primary();
             $table->uuid('category_id');
             $table->uuid('memory_id');
             $table->timestamps();
+            $table->unique(['category_id', 'memory_id']);
 
             $table->foreign('category_id')
                 ->references('id')
