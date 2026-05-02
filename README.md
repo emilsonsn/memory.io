@@ -7,6 +7,17 @@
 <a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
 </p>
 
+## Running with Sail
+
+This project uses Laravel Sail with PostgreSQL.
+
+```bash
+./vendor/bin/sail up -d
+./vendor/bin/sail artisan migrate
+```
+
+The application will be available at `http://localhost`.
+
 ## About Laravel
 
 Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
