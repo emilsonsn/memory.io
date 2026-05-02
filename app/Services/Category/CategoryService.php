@@ -4,15 +4,16 @@ namespace App\Services\Category;
 
 use App\Models\Category;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
-use Illuminate\Database\Eloquent\ModelNotFoundException;
+use RuntimeException;
 
 class CategoryService
 {
     private Category $category;
 
     public function setCategory(Category $category): self
-    {        
+    {
         $this->category = $category;
+
         return $this;
     }
 
@@ -22,14 +23,14 @@ class CategoryService
             ->fresh()
             ->load([
                 'parent',
-                'children'
+                'children',
             ]);
-    }    
+    }
 
     public function verifyCategoryIsSet(): void
     {
         if (! isset($this->category)) {
-            throw new \RuntimeException('Category is not set.');
+            throw new RuntimeException('Category is not set.');
         }
     }
 
@@ -44,12 +45,10 @@ class CategoryService
     public function create(array $data): Category
     {
         $this->category = Category::create($data);
+
         return $this->object();
     }
 
-    /**
-     * @throws ModelNotFoundException
-     */
     public function update(array $data): Category
     {
         $this->verifyCategoryIsSet();
@@ -59,13 +58,11 @@ class CategoryService
         return $this->object();
     }
 
-    /**
-     * @throws ModelNotFoundException
-     */
     public function delete(): self
     {
         $this->verifyCategoryIsSet();
         $this->category->delete();
+
         return $this;
     }
 }
