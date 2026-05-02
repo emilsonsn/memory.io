@@ -22,7 +22,7 @@ class StoreMemoryRequest extends FormRequest
         return [
             'title' => ['required', 'string', 'max:255'],
             'content' => ['required', 'string'],
-            'due_date' => ['nullable', 'date'],
+            'due_date' => ['nullable', 'date', 'after:datetime:now'],
             'category_ids' => ['sometimes', 'array'],
             'category_ids.*' => [
                 'uuid',
