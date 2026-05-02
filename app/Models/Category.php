@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-#[Fillable(['label', 'description', 'parent_id'])]
+#[Fillable(['label', 'description', 'parent_id', 'user_id'])]
 class Category extends Model
 {
     use HasUuids;
@@ -28,5 +28,10 @@ class Category extends Model
     {
         return $this->belongsToMany(Memory::class)
             ->withTimestamps();
+    }
+
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
     }
 }
