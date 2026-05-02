@@ -16,7 +16,12 @@ return new class extends Migration
             $table->string('label');
             $table->string('description');
             $table->uuid('parent_id')->nullable();
+            $table->uuid('user_id');
             $table->timestamps();
+
+            $table->foreign('user_id')
+                ->references('id')
+                ->on('users');
 
             $table->foreign('parent_id')
                 ->references('id')
