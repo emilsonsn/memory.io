@@ -6,18 +6,18 @@ use App\Http\Requests\StoreCategoryRequest;
 use App\Http\Requests\UpdateCategoryRequest;
 use App\Http\Resources\CategoryResource;
 use App\Models\Category;
-use App\Services\Controller\ControllerService;
+use App\Services\Category\CategoryService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class CategoryController extends Controller
 {
-    public function __construct(private readonly ControllerService $controllerService) {}
+    public function __construct(private readonly CategoryService $categoryService) {}
 
     public function index(Request $request): JsonResponse
     {
         $perPage = max(1, min((int) $request->integer('per_page', 15), 100));
-        $categories = $this->controllerService->getAllCategories($perPage);
+        $categories = $this->categoryService->getAll($perPage);
 
         return response()->json([
             'success' => true,
@@ -34,7 +34,9 @@ class CategoryController extends Controller
 
     public function show(Category $category): JsonResponse
     {
-        $category = $this->controllerService->getCategoryById($category);
+        $category = $this->categoryService
+            ->setCategory($category)
+            ->object();
 
         return response()->json([
             'success' => true,
@@ -45,9 +47,8 @@ class CategoryController extends Controller
 
     public function store(StoreCategoryRequest $request): JsonResponse
     {
-        $category = $this->controllerService
-            ->createCategory($request->validated())
-            ->object();
+        $category = $this->categoryService
+            ->create($request->validated());
 
         return response()->json([
             'success' => true,
@@ -58,10 +59,9 @@ class CategoryController extends Controller
 
     public function update(UpdateCategoryRequest $request, Category $category): JsonResponse
     {
-        $updatedCategory = $this->controllerService
+        $updatedCategory = $this->categoryService
             ->setCategory($category)
-            ->updateCategory($category, $request->validated())
-            ->object();
+            ->update($request->validated());
 
         return response()->json([
             'success' => true,
@@ -72,9 +72,9 @@ class CategoryController extends Controller
 
     public function destroy(Category $category): JsonResponse
     {
-        $this->controllerService
+        $this->categoryService
             ->setCategory($category)
-            ->deleteCategory($category);
+            ->delete();
 
         return response()->json([
             'success' => true,
