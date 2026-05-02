@@ -21,7 +21,7 @@ class Category extends Model
             $userId = auth()->id();
 
             if ($userId === null) {
-                $builder->whereRaw('1 = 0');
+                $builder->whereNull($builder->qualifyColumn('user_id'));
 
                 return;
             }
