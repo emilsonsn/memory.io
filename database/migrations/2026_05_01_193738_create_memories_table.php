@@ -12,12 +12,18 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('memories', function (Blueprint $table) {
-            $table->id();
+            $table->uuid('id')->primary();
             $table->string('title');
             $table->longText('content');
             $table->dateTime('due_date')->nullable();
+            $table->uuid('user_id');
             $table->timestamps();
             $table->softDeletes();
+
+            $table->foreign('user_id')
+                ->references('id')
+                ->on('users')
+                ->onDelete('cascade');
         });
     }
 
