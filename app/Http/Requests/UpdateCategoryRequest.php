@@ -31,7 +31,7 @@ class UpdateCategoryRequest extends FormRequest
                 'sometimes',
                 'nullable',
                 'uuid',
-                'exists:categories,id',
+                Rule::exists('categories', 'id')->where('user_id', auth()->id()),
                 Rule::notIn(array_filter([$categoryId])),
             ],
         ];

@@ -3,16 +3,36 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-#[Fillable(['label', 'description', 'parent_id', 'user_id'])]
+#[Fillable(['label', 'description', 'parent_id'])]
 class Category extends Model
 {
     use HasUuids;
+
+    protected static function booted(): void
+    {
+        static::addGlobalScope('owned_by_authenticated_user', function (Builder $builder): void {
+            $userId = auth()->id();
+
+            if ($userId === null) {
+                $builder->whereRaw('1 = 0');
+
+                return;
+            }
+
+            $builder->where($builder->qualifyColumn('user_id'), $userId);
+        });
+
+        static::creating(function (Category $category): void {
+            $category->user_id ??= auth()->id();
+        });
+    }
 
     public function parent(): BelongsTo
     {

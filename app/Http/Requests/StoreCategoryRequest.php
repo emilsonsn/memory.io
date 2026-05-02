@@ -5,6 +5,7 @@ namespace App\Http\Requests;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
+use Illuminate\Validation\Rule;
 
 class StoreCategoryRequest extends FormRequest
 {
@@ -21,7 +22,11 @@ class StoreCategoryRequest extends FormRequest
         return [
             'label' => ['required', 'string', 'max:255'],
             'description' => ['required', 'string', 'max:255'],
-            'parent_id' => ['nullable', 'uuid', 'exists:categories,id'],
+            'parent_id' => [
+                'nullable',
+                'uuid',
+                Rule::exists('categories', 'id')->where('user_id', auth()->id()),
+            ],
         ];
     }
 
