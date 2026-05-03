@@ -3,6 +3,7 @@
 use App\Enums\UserRole;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CategoryController;
+use App\Http\Controllers\ColorController;
 use App\Http\Controllers\MemoryController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\PlanController;
@@ -10,6 +11,7 @@ use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 
 Route::post('users', [UserController::class, 'store'])->name('users.store');
+Route::get('colors', [ColorController::class, 'index'])->name('colors.index');
 
 Route::prefix('auth')->name('auth.')->group(function (): void {
     Route::post('login', [AuthController::class, 'login'])->name('login');

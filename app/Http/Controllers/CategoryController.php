@@ -2,24 +2,27 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\Category\IndexCategoryRequest;
 use App\Http\Requests\Category\StoreCategoryRequest;
 use App\Http\Requests\Category\UpdateCategoryRequest;
 use App\Http\Resources\CategoryResource;
 use App\Models\Category;
 use App\Services\Category\CategoryService;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 
 class CategoryController extends Controller
 {
     public function __construct(private readonly CategoryService $categoryService) {}
 
-    public function index(Request $request): JsonResponse
+    public function index(IndexCategoryRequest $request): JsonResponse
     {
         $this->authorize('viewAny', Category::class);
 
-        $perPage = max(1, min((int) $request->integer('per_page', 15), 100));
-        $categories = $this->categoryService->getAll($perPage);
+        $filters = $request->validated();
+        $perPage = $filters['per_page'] ?? 15;
+        unset($filters['per_page']);
+
+        $categories = $this->categoryService->getAll($perPage, $filters);
 
         return response()->json([
             'success' => true,
