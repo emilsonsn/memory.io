@@ -2,6 +2,7 @@
 
 namespace App\Services\User;
 
+use App\Models\Plan;
 use App\Models\User;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use RuntimeException;
@@ -51,8 +52,20 @@ class UserService
     public function update(array $data): User
     {
         $this->verifyUserIsSet();
+        unset($data['plan_id']);
 
         $this->user->update($data);
+
+        return $this->object();
+    }
+
+    public function assignPlan(Plan|string|null $plan): User
+    {
+        $this->verifyUserIsSet();
+
+        $this->user->forceFill([
+            'plan_id' => $plan instanceof Plan ? $plan->id : $plan,
+        ])->save();
 
         return $this->object();
     }

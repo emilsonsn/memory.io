@@ -15,7 +15,6 @@ class UserServiceTest extends TestCase
 
     public function test_it_creates_user_with_hashed_password(): void
     {
-
         $user = app(UserService::class)->create([
             'name' => 'Jane Doe',
             'email' => 'jane@example.com',
@@ -39,6 +38,39 @@ class UserServiceTest extends TestCase
             ]);
 
         $this->assertSame('After', $updatedUser->name);
+    }
+
+    public function test_it_does_not_update_plan_with_regular_update(): void
+    {
+        $currentPlan = Plan::factory()->create();
+        $newPlan = Plan::factory()->create();
+        $user = User::factory()->create([
+            'plan_id' => $currentPlan->id,
+        ]);
+
+        $updatedUser = app(UserService::class)
+            ->setUser($user)
+            ->update([
+                'name' => 'After',
+                'plan_id' => $newPlan->id,
+            ]);
+
+        $this->assertSame('After', $updatedUser->name);
+        $this->assertSame($currentPlan->id, $updatedUser->plan_id);
+    }
+
+    public function test_it_assigns_plan_explicitly_for_webhook_flow(): void
+    {
+        $plan = Plan::factory()->create();
+        $user = User::factory()->create([
+            'plan_id' => null,
+        ]);
+
+        $updatedUser = app(UserService::class)
+            ->setUser($user)
+            ->assignPlan($plan);
+
+        $this->assertSame($plan->id, $updatedUser->plan_id);
     }
 
     public function test_it_deletes_user(): void
