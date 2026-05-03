@@ -67,7 +67,7 @@ class DeleteExpiredMemoriesJobTest extends TestCase
             'user_id' => $user->id,
             'title' => 'A memoria "Expired memory" foi apagada automaticamente por vencimento.',
             'url' => '/memories',
-            'type' => NotificationType::Process,
+            'type' => NotificationType::PROCESS->value,
             'seen' => false,
         ]);
     }
@@ -102,7 +102,7 @@ class DeleteExpiredMemoriesJobTest extends TestCase
             'user_id' => $user->id,
             'title' => 'A memoria "Tomorrow memory" sera apagada automaticamente em 1 dia.',
             'url' => "/memories/{$tomorrowMemory->id}",
-            'type' => NotificationType::Process,
+            'type' => NotificationType::PROCESS->value,
             'seen' => false,
         ]);
 
@@ -110,7 +110,7 @@ class DeleteExpiredMemoriesJobTest extends TestCase
             1,
             Notification::withoutGlobalScopes()
                 ->where('user_id', $user->id)
-                ->where('type', NotificationType::Process)
+                ->where('type', NotificationType::PROCESS->value)
                 ->count(),
         );
 

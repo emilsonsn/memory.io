@@ -2,7 +2,8 @@
 
 namespace App\Enums;
 
-class NotificationType{
-    const Default = 'default';
-    const Process = 'process';
+enum NotificationType: string
+{
+    case DEFAULT = 'default';
+    case PROCESS = 'process';
 }

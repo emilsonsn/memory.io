@@ -28,7 +28,7 @@ class NotificationApiTest extends TestCase
         $visibleNotification = Notification::query()->create([
             'title' => 'Visible notification',
             'url' => '/memories',
-            'type' => NotificationType::Default,
+            'type' => NotificationType::DEFAULT->value,
         ]);
 
         $this->actingAs($otherUser, 'api');
@@ -36,7 +36,7 @@ class NotificationApiTest extends TestCase
         Notification::query()->create([
             'title' => 'Hidden notification',
             'url' => '/memories',
-            'type' => NotificationType::Process,
+            'type' => NotificationType::PROCESS->value,
         ]);
 
         $this->actingAs($user, 'api')
@@ -61,7 +61,7 @@ class NotificationApiTest extends TestCase
             ->postJson('/api/notifications', [
                 'title' => 'New notification',
                 'url' => '/memories',
-                'type' => NotificationType::Default,
+                'type' => NotificationType::DEFAULT->value,
             ])
             ->assertMethodNotAllowed();
     }
@@ -74,7 +74,7 @@ class NotificationApiTest extends TestCase
         $notification = Notification::query()->create([
             'title' => 'Unread notification',
             'url' => '/memories',
-            'type' => NotificationType::Default,
+            'type' => NotificationType::DEFAULT->value,
         ]);
 
         $this->actingAs($user, 'api')
@@ -100,13 +100,13 @@ class NotificationApiTest extends TestCase
         $first = Notification::query()->create([
             'title' => 'First unread',
             'url' => '/memories',
-            'type' => NotificationType::Default,
+            'type' => NotificationType::DEFAULT->value,
         ]);
 
         $second = Notification::query()->create([
             'title' => 'Second unread',
             'url' => '/memories',
-            'type' => NotificationType::Process,
+            'type' => NotificationType::PROCESS->value,
         ]);
 
         $this->actingAs($user, 'api')
@@ -145,14 +145,14 @@ class NotificationApiTest extends TestCase
         $ownNotification = Notification::query()->create([
             'title' => 'Own notification',
             'url' => '/memories',
-            'type' => NotificationType::Default,
+            'type' => NotificationType::DEFAULT->value,
         ]);
 
         $this->actingAs($otherUser, 'api');
         $otherNotification = Notification::query()->create([
             'title' => 'Other notification',
             'url' => '/memories',
-            'type' => NotificationType::Process,
+            'type' => NotificationType::PROCESS->value,
         ]);
 
         $this->actingAs($user, 'api')

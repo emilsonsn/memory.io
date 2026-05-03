@@ -2,12 +2,14 @@
 
 namespace App\Models;
 
+use App\Enums\NotificationType;
 use App\Support\VersionedCache;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 #[Fillable(['title', 'url', 'type', 'seen'])]
 class Notification extends Model
@@ -53,12 +55,12 @@ class Notification extends Model
     protected function casts(): array
     {
         return [
-            'type' => 'string',
+            'type' => NotificationType::class,
             'seen' => 'boolean',
         ];
-    }    
+    }
 
-    public function user()
+    public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
     }

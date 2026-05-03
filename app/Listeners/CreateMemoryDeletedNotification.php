@@ -19,7 +19,7 @@ class CreateMemoryDeletedNotification
             ->where('user_id', $event->userId)
             ->where('title', $title)
             ->where('url', '/memories')
-            ->where('type', NotificationType::Process)
+            ->where('type', NotificationType::PROCESS->value)
             ->exists();
 
         if ($exists) {
@@ -30,7 +30,7 @@ class CreateMemoryDeletedNotification
         $notification->user_id = $event->userId;
         $notification->title = $title;
         $notification->url = '/memories';
-        $notification->type = NotificationType::Process;
+        $notification->type = NotificationType::PROCESS;
         $notification->seen = false;
         $notification->save();
     }
