@@ -22,7 +22,10 @@ class StorePlanRequest extends FormRequest
             'name' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string'],
             'amount' => ['required', 'numeric', 'min:0', 'decimal:0,2'],
-            'memory_limit' => ['nullable', 'integer', 'min:0'],
+            'max_memories' => ['nullable', 'integer', 'min:0'],
+            'max_categories' => ['nullable', 'integer', 'min:0'],
+            'can_export' => ['sometimes', 'boolean'],
+            'can_use_ai' => ['sometimes', 'boolean'],
         ];
     }
 

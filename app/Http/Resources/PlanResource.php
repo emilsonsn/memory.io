@@ -17,7 +17,10 @@ class PlanResource extends JsonResource
             'name' => $this->name,
             'description' => $this->description,
             'amount' => $this->amount,
-            'memory_limit' => $this->memory_limit,
+            'max_memories' => $this->max_memories,
+            'max_categories' => $this->max_categories,
+            'can_export' => $this->can_export,
+            'can_use_ai' => $this->can_use_ai,
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
         ];

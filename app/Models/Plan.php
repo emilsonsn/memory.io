@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-#[Fillable(['name', 'description', 'amount', 'memory_limit'])]
+#[Fillable(['name', 'description', 'amount', 'max_memories', 'max_categories', 'can_export', 'can_use_ai'])]
 class Plan extends Model
 {
     use HasFactory, HasUuids;
@@ -22,7 +22,10 @@ class Plan extends Model
     {
         return [
             'amount' => 'decimal:2',
-            'memory_limit' => 'integer',
+            'max_memories' => 'integer',
+            'max_categories' => 'integer',
+            'can_export' => 'boolean',
+            'can_use_ai' => 'boolean',
         ];
     }
 
