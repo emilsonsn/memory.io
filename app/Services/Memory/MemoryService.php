@@ -89,6 +89,8 @@ class MemoryService
                     $query->whereDate('due_date', '>=', (string) $filters['due_from']);
                 })->when(! empty($filters['due_to']), function ($query) use ($filters) {
                     $query->whereDate('due_date', '<=', (string) $filters['due_to']);
+                })->when(! empty($filters['color']), function ($query) use ($filters) {
+                    $query->where('color', (string) $filters['color']);
                 })->when(is_array($categoryIds) && $categoryIds !== [], function ($query) use ($categoryIds) {
                     $query->whereHas('categories', function ($categoriesQuery) use ($categoryIds): void {
                         $categoriesQuery->whereIn('categories.id', $categoryIds);
@@ -118,7 +120,7 @@ class MemoryService
         $this->audit('memory.created', $memory, [
             'old' => null,
             'new' => $this->memoryAuditSnapshot($memory),
-            'changed_fields' => ['title', 'content', 'due_date', 'category_ids'],
+            'changed_fields' => ['title', 'content', 'color', 'due_date', 'category_ids'],
         ]);
 
         $this->invalidateCacheForMemory($memory);
@@ -243,6 +245,7 @@ class MemoryService
         return [
             'title' => $memory->title,
             'content' => $memory->content,
+            'color' => $memory->color?->value,
             'due_date' => $dueDate?->toISOString(),
             'category_ids' => $memory->categories()
                 ->pluck('categories.id')

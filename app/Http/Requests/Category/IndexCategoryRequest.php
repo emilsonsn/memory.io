@@ -8,7 +8,7 @@ use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Validation\Rule;
 
-class UpdateCategoryRequest extends FormRequest
+class IndexCategoryRequest extends FormRequest
 {
     public function authorize(): bool
     {
@@ -20,22 +20,9 @@ class UpdateCategoryRequest extends FormRequest
      */
     public function rules(): array
     {
-        $category = $this->route('category') ?? $this->route('id');
-        $categoryId = is_object($category) && method_exists($category, 'getKey')
-            ? $category->getKey()
-            : $category;
-
         return [
-            'label' => ['sometimes', 'required', 'string', 'max:255'],
-            'description' => ['sometimes', 'required', 'string', 'max:255'],
+            'per_page' => ['sometimes', 'integer', 'min:1', 'max:100'],
             'color' => ['sometimes', 'nullable', Rule::in(NoteColor::values())],
-            'parent_id' => [
-                'sometimes',
-                'nullable',
-                'uuid',
-                Rule::exists('categories', 'id')->where('user_id', auth()->id()),
-                Rule::notIn(array_filter([$categoryId])),
-            ],
         ];
     }
 

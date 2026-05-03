@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Memory;
 
+use App\Enums\NoteColor;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
@@ -22,6 +23,7 @@ class UpdateMemoryRequest extends FormRequest
         return [
             'title' => ['sometimes', 'required', 'string', 'max:255'],
             'content' => ['sometimes', 'required', 'string'],
+            'color' => ['sometimes', 'nullable', Rule::in(NoteColor::values())],
             'due_date' => ['sometimes', 'nullable', 'date'],
             'category_ids' => ['sometimes', 'array'],
             'category_ids.*' => [

@@ -21,6 +21,7 @@ class MemoryFactory extends Factory
         return [
             'title' => fake()->sentence(3),
             'content' => fake()->paragraph(),
+            'color' => fake()->randomElement(['gray', 'red', 'orange', 'yellow', 'green', 'blue', 'purple', 'pink']),
             'due_date' => fake()->optional()->dateTimeBetween('+1 day', '+1 month'),
             'user_id' => User::factory(),
         ];

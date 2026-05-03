@@ -16,6 +16,7 @@ class MemoryResource extends JsonResource
             'id' => $this->id,
             'title' => $this->title,
             'content' => $this->content,
+            'color' => $this->color?->value,
             'due_date' => $this->due_date,
             'categories' => CategoryResource::collection($this->whenLoaded('categories')),
             'created_at' => $this->created_at,

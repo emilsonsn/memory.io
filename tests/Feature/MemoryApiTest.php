@@ -60,6 +60,7 @@ class MemoryApiTest extends TestCase
         $matchingMemory = Memory::factory()->for($user)->create([
             'title' => 'Project kickoff notes',
             'content' => 'Discuss timeline and deliverables.',
+            'color' => 'blue',
             'due_date' => '2026-05-20 10:00:00',
             'created_at' => '2026-05-10 09:00:00',
             'updated_at' => '2026-05-12 14:00:00',
@@ -69,6 +70,7 @@ class MemoryApiTest extends TestCase
         $wrongDueDateMemory = Memory::factory()->for($user)->create([
             'title' => 'Project kickoff draft',
             'content' => 'This one has due date out of range.',
+            'color' => 'blue',
             'due_date' => '2026-06-10 10:00:00',
             'created_at' => '2026-05-10 09:00:00',
             'updated_at' => '2026-05-12 14:00:00',
@@ -78,6 +80,7 @@ class MemoryApiTest extends TestCase
         $wrongCategoryMemory = Memory::factory()->for($user)->create([
             'title' => 'Project kickoff retrospective',
             'content' => 'Same text, but wrong category.',
+            'color' => 'blue',
             'due_date' => '2026-05-20 10:00:00',
             'created_at' => '2026-05-10 09:00:00',
             'updated_at' => '2026-05-12 14:00:00',
@@ -87,6 +90,7 @@ class MemoryApiTest extends TestCase
         $otherUserMemory = Memory::factory()->for($otherUser)->create([
             'title' => 'Project kickoff private',
             'content' => 'Should not be visible for authenticated user.',
+            'color' => 'blue',
             'due_date' => '2026-05-20 10:00:00',
             'created_at' => '2026-05-10 09:00:00',
             'updated_at' => '2026-05-12 14:00:00',
@@ -101,6 +105,7 @@ class MemoryApiTest extends TestCase
             'due_from' => '2026-05-01',
             'due_to' => '2026-05-31',
             'text' => 'kickoff',
+            'color' => 'blue',
             'category_ids' => [$targetCategory->id],
         ]);
 
@@ -213,6 +218,7 @@ class MemoryApiTest extends TestCase
             ->postJson('/api/memories', [
                 'title' => 'Buy coffee',
                 'content' => 'Remember to buy coffee tomorrow.',
+                'color' => 'purple',
                 'due_date' => now()->addDay()->toISOString(),
                 'category_ids' => [$category->id],
             ])
@@ -220,6 +226,7 @@ class MemoryApiTest extends TestCase
             ->assertJsonPath('success', true)
             ->assertJsonFragment([
                 'title' => 'Buy coffee',
+                'color' => 'purple',
             ])
             ->assertJsonFragment([
                 'id' => $category->id,
@@ -229,6 +236,7 @@ class MemoryApiTest extends TestCase
 
         $this->assertDatabaseHas('memories', [
             'id' => $memory->id,
+            'color' => 'purple',
             'user_id' => $user->id,
         ]);
 
@@ -253,6 +261,7 @@ class MemoryApiTest extends TestCase
             ->firstOrFail();
 
         $this->assertSame('Buy coffee', data_get($activity->properties->toArray(), 'new.title'));
+        $this->assertSame('purple', data_get($activity->properties->toArray(), 'new.color'));
         $this->assertSame($category->id, data_get($activity->properties->toArray(), 'new.category_ids.0'));
     }
 

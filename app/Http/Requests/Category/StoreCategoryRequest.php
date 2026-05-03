@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Category;
 
+use App\Enums\NoteColor;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
@@ -22,6 +23,7 @@ class StoreCategoryRequest extends FormRequest
         return [
             'label' => ['required', 'string', 'max:255'],
             'description' => ['required', 'string', 'max:255'],
+            'color' => ['sometimes', 'nullable', Rule::in(NoteColor::values())],
             'parent_id' => [
                 'nullable',
                 'uuid',

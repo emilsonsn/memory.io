@@ -26,10 +26,12 @@ class CategoryApiTest extends TestCase
 
         $visibleCategory = Category::factory()->for($user)->create([
             'label' => 'Personal',
+            'color' => 'blue',
         ]);
 
         Category::factory()->for($otherUser)->create([
             'label' => 'Hidden',
+            'color' => 'red',
         ]);
 
         $this->actingAs($user, 'api')
@@ -39,9 +41,37 @@ class CategoryApiTest extends TestCase
             ->assertJsonFragment([
                 'id' => $visibleCategory->id,
                 'label' => 'Personal',
+                'color' => 'blue',
             ])
             ->assertJsonMissing([
                 'label' => 'Hidden',
+            ]);
+    }
+
+    public function test_user_can_filter_categories_by_color(): void
+    {
+        $user = User::factory()->create();
+
+        $blueCategory = Category::factory()->for($user)->create([
+            'label' => 'Blue category',
+            'color' => 'blue',
+        ]);
+
+        $redCategory = Category::factory()->for($user)->create([
+            'label' => 'Red category',
+            'color' => 'red',
+        ]);
+
+        $this->actingAs($user, 'api')
+            ->getJson('/api/categories?color=blue')
+            ->assertOk()
+            ->assertJsonPath('success', true)
+            ->assertJsonFragment([
+                'id' => $blueCategory->id,
+                'color' => 'blue',
+            ])
+            ->assertJsonMissing([
+                'id' => $redCategory->id,
             ]);
     }
 
@@ -56,16 +86,19 @@ class CategoryApiTest extends TestCase
             ->postJson('/api/categories', [
                 'label' => 'Work',
                 'description' => 'Work related memories',
+                'color' => 'green',
             ])
             ->assertCreated()
             ->assertJsonPath('success', true)
             ->assertJsonFragment([
                 'label' => 'Work',
                 'description' => 'Work related memories',
+                'color' => 'green',
             ]);
 
         $this->assertDatabaseHas('categories', [
             'label' => 'Work',
+            'color' => 'green',
             'user_id' => $user->id,
         ]);
 
@@ -87,6 +120,7 @@ class CategoryApiTest extends TestCase
             ->firstOrFail();
 
         $this->assertSame('Work', data_get($activity->properties->toArray(), 'new.label'));
+        $this->assertSame('green', data_get($activity->properties->toArray(), 'new.color'));
     }
 
     public function test_user_can_update_category_and_generate_audit_log(): void

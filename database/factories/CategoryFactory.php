@@ -21,6 +21,7 @@ class CategoryFactory extends Factory
         return [
             'label' => fake()->words(2, true),
             'description' => fake()->sentence(),
+            'color' => fake()->randomElement(['gray', 'red', 'orange', 'yellow', 'green', 'blue', 'purple', 'pink']),
             'parent_id' => null,
             'user_id' => User::factory(),
         ];

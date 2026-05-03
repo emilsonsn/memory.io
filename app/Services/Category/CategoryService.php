@@ -43,7 +43,10 @@ class CategoryService
         }
     }
 
-    public function getAll(int $perPage = 15): LengthAwarePaginator
+    /**
+     * @param  array<string, mixed>  $filters
+     */
+    public function getAll(int $perPage = 15, array $filters = []): LengthAwarePaginator
     {
         $userId = auth()->id();
         $page = request()->integer('page', 1);
@@ -53,12 +56,21 @@ class CategoryService
             params: [
                 'per_page' => $perPage,
                 'page' => $page,
+                'filters' => $filters,
             ],
             ttlSeconds: self::LIST_CACHE_TTL_SECONDS,
-            callback: static fn () => Category::query()
-                ->with('parent')
-                ->latest()
-                ->paginate($perPage),
+            callback: static function () use ($perPage, $filters) {
+                $query = Category::query()
+                    ->with('parent');
+
+                $query->when(! empty($filters['color']), function ($query) use ($filters) {
+                    $query->where('color', (string) $filters['color']);
+                });
+
+                return $query
+                    ->latest()
+                    ->paginate($perPage);
+            },
             scope: $userId,
         );
     }
@@ -74,7 +86,7 @@ class CategoryService
         $this->audit('category.created', $category, [
             'old' => null,
             'new' => $this->categoryAuditSnapshot($category),
-            'changed_fields' => ['label', 'description', 'parent_id'],
+            'changed_fields' => ['label', 'description', 'color', 'parent_id'],
         ]);
 
         VersionedCache::bump('categories.list', $category->user_id);
@@ -132,6 +144,7 @@ class CategoryService
         return [
             'label' => $category->label,
             'description' => $category->description,
+            'color' => $category->color?->value,
             'parent_id' => $category->parent_id,
         ];
     }
