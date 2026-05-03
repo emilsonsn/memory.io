@@ -25,7 +25,7 @@ class PlanApiTest extends TestCase
         $user = User::factory()->create();
         $user->assignRole('user');
 
-        $this->actingAs($user)
+        $this->actingAs($user, 'api')
             ->getJson('/api/plans')
             ->assertForbidden();
     }
@@ -40,7 +40,7 @@ class PlanApiTest extends TestCase
             'name' => 'Premium',
         ]);
 
-        $this->actingAs($user)
+        $this->actingAs($user, 'api')
             ->getJson('/api/plans')
             ->assertOk()
             ->assertJsonPath('success', true)
@@ -57,7 +57,7 @@ class PlanApiTest extends TestCase
         $user = User::factory()->create();
         $user->assignRole('admin');
 
-        $this->actingAs($user)
+        $this->actingAs($user, 'api')
             ->postJson('/api/plans', [
                 'name' => 'Starter',
                 'description' => 'Starter plan',
@@ -99,14 +99,14 @@ class PlanApiTest extends TestCase
             'amount' => '9.90',
         ]);
 
-        $this->actingAs($user)
+        $this->actingAs($user, 'api')
             ->getJson("/api/plans/{$plan->id}")
             ->assertOk()
             ->assertJsonFragment([
                 'name' => 'Basic',
             ]);
 
-        $this->actingAs($user)
+        $this->actingAs($user, 'api')
             ->patchJson("/api/plans/{$plan->id}", [
                 'name' => 'Business',
                 'amount' => '49.90',
@@ -124,7 +124,7 @@ class PlanApiTest extends TestCase
                 'can_use_ai' => true,
             ]);
 
-        $this->actingAs($user)
+        $this->actingAs($user, 'api')
             ->deleteJson("/api/plans/{$plan->id}")
             ->assertOk()
             ->assertJsonPath('success', true);

@@ -63,7 +63,7 @@ class UserApiTest extends TestCase
         $user = User::factory()->create();
         $user->assignRole('user');
 
-        $this->actingAs($user)
+        $this->actingAs($user, 'api')
             ->getJson('/api/users')
             ->assertForbidden();
     }
@@ -77,7 +77,7 @@ class UserApiTest extends TestCase
         ]);
         $user->assignRole('admin');
 
-        $this->actingAs($user)
+        $this->actingAs($user, 'api')
             ->getJson('/api/users')
             ->assertOk()
             ->assertJsonPath('success', true)
@@ -97,14 +97,14 @@ class UserApiTest extends TestCase
             'name' => 'Old Name',
         ]);
 
-        $this->actingAs($user)
+        $this->actingAs($user, 'api')
             ->getJson("/api/users/{$targetUser->id}")
             ->assertOk()
             ->assertJsonFragment([
                 'name' => 'Old Name',
             ]);
 
-        $this->actingAs($user)
+        $this->actingAs($user, 'api')
             ->patchJson("/api/users/{$targetUser->id}", [
                 'name' => 'New Name',
                 'email' => 'new-name@example.com',
@@ -115,7 +115,7 @@ class UserApiTest extends TestCase
                 'email' => 'new-name@example.com',
             ]);
 
-        $this->actingAs($user)
+        $this->actingAs($user, 'api')
             ->deleteJson("/api/users/{$targetUser->id}")
             ->assertOk()
             ->assertJsonPath('success', true);
@@ -137,7 +137,7 @@ class UserApiTest extends TestCase
             'plan_id' => $currentPlan->id,
         ]);
 
-        $this->actingAs($user)
+        $this->actingAs($user, 'api')
             ->patchJson("/api/users/{$targetUser->id}", [
                 'name' => 'Still allowed',
                 'plan_id' => $newPlan->id,

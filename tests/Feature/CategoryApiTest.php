@@ -31,7 +31,7 @@ class CategoryApiTest extends TestCase
             'label' => 'Hidden',
         ]);
 
-        $this->actingAs($user)
+        $this->actingAs($user, 'api')
             ->getJson('/api/categories')
             ->assertOk()
             ->assertJsonPath('success', true)
@@ -51,7 +51,7 @@ class CategoryApiTest extends TestCase
         ]);
         $user = User::factory()->for($plan)->create();
 
-        $this->actingAs($user)
+        $this->actingAs($user, 'api')
             ->postJson('/api/categories', [
                 'label' => 'Work',
                 'description' => 'Work related memories',
@@ -78,7 +78,7 @@ class CategoryApiTest extends TestCase
         $otherUser = User::factory()->create();
         $otherUsersCategory = Category::factory()->for($otherUser)->create();
 
-        $this->actingAs($user)
+        $this->actingAs($user, 'api')
             ->postJson('/api/categories', [
                 'label' => 'Private',
                 'description' => 'Private category',
@@ -97,7 +97,7 @@ class CategoryApiTest extends TestCase
 
         Category::factory()->for($user)->create();
 
-        $this->actingAs($user)
+        $this->actingAs($user, 'api')
             ->postJson('/api/categories', [
                 'label' => 'Blocked',
                 'description' => 'This should not be created.',

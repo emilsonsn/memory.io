@@ -33,7 +33,7 @@ class MemoryApiTest extends TestCase
             'title' => 'Hidden memory',
         ]);
 
-        $this->actingAs($user)
+        $this->actingAs($user, 'api')
             ->getJson('/api/memories')
             ->assertOk()
             ->assertJsonPath('success', true)
@@ -54,7 +54,7 @@ class MemoryApiTest extends TestCase
         $user = User::factory()->for($plan)->create();
         $category = Category::factory()->for($user)->create();
 
-        $this->actingAs($user)
+        $this->actingAs($user, 'api')
             ->postJson('/api/memories', [
                 'title' => 'Buy coffee',
                 'content' => 'Remember to buy coffee tomorrow.',
@@ -92,7 +92,7 @@ class MemoryApiTest extends TestCase
         $otherUser = User::factory()->create();
         $otherUsersCategory = Category::factory()->for($otherUser)->create();
 
-        $this->actingAs($user)
+        $this->actingAs($user, 'api')
             ->postJson('/api/memories', [
                 'title' => 'Buy tea',
                 'content' => 'Remember to buy tea tomorrow.',
@@ -113,7 +113,7 @@ class MemoryApiTest extends TestCase
             'title' => 'Old title',
         ]);
 
-        $this->actingAs($user)
+        $this->actingAs($user, 'api')
             ->patchJson("/api/memories/{$memory->id}", [
                 'title' => 'New title',
             ])
@@ -122,7 +122,7 @@ class MemoryApiTest extends TestCase
                 'title' => 'New title',
             ]);
 
-        $this->actingAs($user)
+        $this->actingAs($user, 'api')
             ->deleteJson("/api/memories/{$memory->id}")
             ->assertOk()
             ->assertJsonPath('success', true);
@@ -141,7 +141,7 @@ class MemoryApiTest extends TestCase
 
         Memory::factory()->for($user)->create();
 
-        $this->actingAs($user)
+        $this->actingAs($user, 'api')
             ->postJson('/api/memories', [
                 'title' => 'Blocked memory',
                 'content' => 'This should not be created.',
@@ -160,7 +160,7 @@ class MemoryApiTest extends TestCase
         ]);
         $user->assignRole('admin');
 
-        $this->actingAs($user)
+        $this->actingAs($user, 'api')
             ->postJson('/api/memories', [
                 'title' => 'Admin memory',
                 'content' => 'Admins are not limited by plans.',
