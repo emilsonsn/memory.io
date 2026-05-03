@@ -24,6 +24,7 @@ Route::middleware('auth:api')->group(function (): void {
     
     Route::prefix('notifications')->name('notifications.')->group(function (): void {
         Route::get('/', [NotificationController::class, 'index'])->name('index');
+        Route::patch('read', [NotificationController::class, 'readMany'])->name('read-many');
         Route::patch('{notification}/read', [NotificationController::class, 'read'])->name('read');
     });
 

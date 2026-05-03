@@ -4,6 +4,7 @@ namespace App\Services\Notification;
 
 use App\Models\Notification;
 use App\Support\VersionedCache;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 
 class NotificationService
@@ -61,5 +62,28 @@ class NotificationService
         $this->notification = $notification;
 
         return $this->object();
+    }
+
+    /**
+     * @param  array<int, string>  $ids
+     * @return Collection<int, Notification>
+     */
+    public function readMany(array $ids): Collection
+    {
+        $notifications = Notification::query()
+            ->whereIn('id', $ids)
+            ->get();
+
+        $notifications->each(function (Notification $notification): void {
+            if (! $notification->seen) {
+                $notification->update([
+                    'seen' => true,
+                ]);
+            }
+        });
+
+        return Notification::query()
+            ->whereIn('id', $ids)
+            ->get();
     }
 }

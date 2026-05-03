@@ -91,4 +91,85 @@ class NotificationApiTest extends TestCase
             'seen' => true,
         ]);
     }
+
+    public function test_user_can_mark_multiple_notifications_as_read(): void
+    {
+        $user = User::factory()->create();
+        $this->actingAs($user, 'api');
+
+        $first = Notification::query()->create([
+            'title' => 'First unread',
+            'url' => '/memories',
+            'type' => NotificationType::Default,
+        ]);
+
+        $second = Notification::query()->create([
+            'title' => 'Second unread',
+            'url' => '/memories',
+            'type' => NotificationType::Process,
+        ]);
+
+        $this->actingAs($user, 'api')
+            ->patchJson('/api/notifications/read', [
+                'ids' => [$first->id, $second->id],
+            ])
+            ->assertOk()
+            ->assertJsonPath('success', true)
+            ->assertJsonFragment([
+                'id' => $first->id,
+                'seen' => true,
+            ])
+            ->assertJsonFragment([
+                'id' => $second->id,
+                'seen' => true,
+            ]);
+
+        $this->assertDatabaseHas('notifications', [
+            'id' => $first->id,
+            'seen' => true,
+        ]);
+
+        $this->assertDatabaseHas('notifications', [
+            'id' => $second->id,
+            'seen' => true,
+        ]);
+    }
+
+    public function test_user_cannot_mark_other_users_notifications_as_read_in_batch(): void
+    {
+        $user = User::factory()->create();
+        $otherUser = User::factory()->create();
+
+        $this->actingAs($user, 'api');
+
+        $ownNotification = Notification::query()->create([
+            'title' => 'Own notification',
+            'url' => '/memories',
+            'type' => NotificationType::Default,
+        ]);
+
+        $this->actingAs($otherUser, 'api');
+        $otherNotification = Notification::query()->create([
+            'title' => 'Other notification',
+            'url' => '/memories',
+            'type' => NotificationType::Process,
+        ]);
+
+        $this->actingAs($user, 'api')
+            ->patchJson('/api/notifications/read', [
+                'ids' => [$ownNotification->id, $otherNotification->id],
+            ])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('ids.1');
+
+        $this->assertDatabaseHas('notifications', [
+            'id' => $ownNotification->id,
+            'seen' => false,
+        ]);
+
+        $this->assertDatabaseHas('notifications', [
+            'id' => $otherNotification->id,
+            'seen' => false,
+        ]);
+    }
 }

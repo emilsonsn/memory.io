@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\Notification\ReadManyNotificationsRequest;
 use App\Http\Resources\NotificationResource;
 use App\Models\Notification;
 use App\Services\Notification\NotificationService;
@@ -39,6 +40,17 @@ class NotificationController extends Controller
             'success' => true,
             'message' => 'Notification marked as seen successfully.',
             'data' => NotificationResource::make($notification),
+        ]);
+    }
+
+    public function readMany(ReadManyNotificationsRequest $request): JsonResponse
+    {
+        $notifications = $this->notificationService->readMany($request->validated('ids'));
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Notifications marked as seen successfully.',
+            'data' => NotificationResource::collection($notifications),
         ]);
     }
 }
