@@ -2,7 +2,9 @@
 
 namespace Tests\Unit;
 
+use App\Exceptions\PlanLimitExceededException;
 use App\Models\Category;
+use App\Models\Plan;
 use App\Models\User;
 use App\Services\Category\CategoryService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -14,7 +16,10 @@ class CategoryServiceTest extends TestCase
 
     public function test_it_creates_category_for_authenticated_user(): void
     {
-        $user = User::factory()->create();
+        $plan = Plan::factory()->create([
+            'max_categories' => 10,
+        ]);
+        $user = User::factory()->for($plan)->create();
 
         $this->actingAs($user);
 
@@ -43,5 +48,24 @@ class CategoryServiceTest extends TestCase
         $categories = app(CategoryService::class)->getAll();
 
         $this->assertSame(1, $categories->total());
+    }
+
+    public function test_it_blocks_category_creation_after_plan_limit(): void
+    {
+        $plan = Plan::factory()->create([
+            'max_categories' => 1,
+        ]);
+        $user = User::factory()->for($plan)->create();
+
+        Category::factory()->for($user)->create();
+
+        $this->actingAs($user);
+
+        $this->expectException(PlanLimitExceededException::class);
+
+        app(CategoryService::class)->create([
+            'label' => 'Blocked',
+            'description' => 'This should not be created.',
+        ]);
     }
 }

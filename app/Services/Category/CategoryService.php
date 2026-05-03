@@ -3,12 +3,15 @@
 namespace App\Services\Category;
 
 use App\Models\Category;
+use App\Services\Plan\PlanLimitService;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use RuntimeException;
 
 class CategoryService
 {
     private Category $category;
+
+    public function __construct(private readonly PlanLimitService $planLimitService) {}
 
     public function setCategory(Category $category): self
     {
@@ -44,6 +47,8 @@ class CategoryService
 
     public function create(array $data): Category
     {
+        $this->planLimitService->ensureCanCreateCategory(auth()->user());
+
         $this->category = Category::create($data);
 
         return $this->object();

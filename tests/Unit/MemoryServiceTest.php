@@ -18,7 +18,7 @@ class MemoryServiceTest extends TestCase
     public function test_it_creates_memory_for_authenticated_user(): void
     {
         $plan = Plan::factory()->create([
-            'memory_limit' => 100,
+            'max_memories' => 100,
         ]);
         $user = User::factory()->for($plan)->create();
 
@@ -40,7 +40,7 @@ class MemoryServiceTest extends TestCase
     public function test_it_syncs_only_owned_categories(): void
     {
         $plan = Plan::factory()->create([
-            'memory_limit' => 100,
+            'max_memories' => 100,
         ]);
         $user = User::factory()->for($plan)->create();
         $otherUser = User::factory()->create();
@@ -87,7 +87,7 @@ class MemoryServiceTest extends TestCase
     public function test_it_blocks_memory_creation_after_plan_limit(): void
     {
         $plan = Plan::factory()->create([
-            'memory_limit' => 1,
+            'max_memories' => 1,
         ]);
         $user = User::factory()->for($plan)->create();
 

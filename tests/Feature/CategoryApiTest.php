@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\Category;
+use App\Models\Plan;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -45,7 +46,10 @@ class CategoryApiTest extends TestCase
 
     public function test_user_can_create_category(): void
     {
-        $user = User::factory()->create();
+        $plan = Plan::factory()->create([
+            'max_categories' => 10,
+        ]);
+        $user = User::factory()->for($plan)->create();
 
         $this->actingAs($user)
             ->postJson('/api/categories', [
@@ -67,7 +71,10 @@ class CategoryApiTest extends TestCase
 
     public function test_user_cannot_use_another_users_category_as_parent(): void
     {
-        $user = User::factory()->create();
+        $plan = Plan::factory()->create([
+            'max_categories' => 10,
+        ]);
+        $user = User::factory()->for($plan)->create();
         $otherUser = User::factory()->create();
         $otherUsersCategory = Category::factory()->for($otherUser)->create();
 
@@ -79,5 +86,23 @@ class CategoryApiTest extends TestCase
             ])
             ->assertUnprocessable()
             ->assertJsonValidationErrors('parent_id');
+    }
+
+    public function test_user_cannot_create_category_after_reaching_plan_limit(): void
+    {
+        $plan = Plan::factory()->create([
+            'max_categories' => 1,
+        ]);
+        $user = User::factory()->for($plan)->create();
+
+        Category::factory()->for($user)->create();
+
+        $this->actingAs($user)
+            ->postJson('/api/categories', [
+                'label' => 'Blocked',
+                'description' => 'This should not be created.',
+            ])
+            ->assertForbidden()
+            ->assertJsonPath('code', 'PLAN_LIMIT_EXCEEDED');
     }
 }

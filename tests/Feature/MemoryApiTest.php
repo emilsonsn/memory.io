@@ -49,7 +49,7 @@ class MemoryApiTest extends TestCase
     public function test_user_can_create_memory_with_categories(): void
     {
         $plan = Plan::factory()->create([
-            'memory_limit' => 100,
+            'max_memories' => 100,
         ]);
         $user = User::factory()->for($plan)->create();
         $category = Category::factory()->for($user)->create();
@@ -86,7 +86,7 @@ class MemoryApiTest extends TestCase
     public function test_user_cannot_attach_another_users_category_to_memory(): void
     {
         $plan = Plan::factory()->create([
-            'memory_limit' => 100,
+            'max_memories' => 100,
         ]);
         $user = User::factory()->for($plan)->create();
         $otherUser = User::factory()->create();
@@ -106,7 +106,7 @@ class MemoryApiTest extends TestCase
     public function test_user_can_update_and_delete_memory(): void
     {
         $plan = Plan::factory()->create([
-            'memory_limit' => 100,
+            'max_memories' => 100,
         ]);
         $user = User::factory()->for($plan)->create();
         $memory = Memory::factory()->for($user)->create([
@@ -135,7 +135,7 @@ class MemoryApiTest extends TestCase
     public function test_user_cannot_create_memory_after_reaching_plan_limit(): void
     {
         $plan = Plan::factory()->create([
-            'memory_limit' => 1,
+            'max_memories' => 1,
         ]);
         $user = User::factory()->for($plan)->create();
 
