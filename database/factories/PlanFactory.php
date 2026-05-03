@@ -21,7 +21,10 @@ class PlanFactory extends Factory
             'name' => fake()->unique()->words(2, true),
             'description' => fake()->sentence(),
             'amount' => fake()->randomFloat(2, 0, 999.99),
-            'memory_limit' => null,
+            'max_memories' => null,
+            'max_categories' => null,
+            'can_export' => false,
+            'can_use_ai' => false,
         ];
     }
 }

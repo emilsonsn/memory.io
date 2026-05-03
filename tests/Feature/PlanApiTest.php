@@ -62,18 +62,29 @@ class PlanApiTest extends TestCase
                 'name' => 'Starter',
                 'description' => 'Starter plan',
                 'amount' => '19.90',
-                'memory_limit' => 100,
+                'max_memories' => 100,
+                'max_categories' => 10,
+                'can_export' => false,
+                'can_use_ai' => false,
             ])
             ->assertCreated()
             ->assertJsonPath('success', true)
             ->assertJsonFragment([
                 'name' => 'Starter',
                 'description' => 'Starter plan',
+                'max_memories' => 100,
+                'max_categories' => 10,
+                'can_export' => false,
+                'can_use_ai' => false,
             ]);
 
         $this->assertDatabaseHas('plans', [
             'name' => 'Starter',
             'amount' => '19.90',
+            'max_memories' => 100,
+            'max_categories' => 10,
+            'can_export' => false,
+            'can_use_ai' => false,
         ]);
     }
 
@@ -99,11 +110,18 @@ class PlanApiTest extends TestCase
             ->patchJson("/api/plans/{$plan->id}", [
                 'name' => 'Business',
                 'amount' => '49.90',
-                'memory_limit' => 500,
+                'max_memories' => 500,
+                'max_categories' => 50,
+                'can_export' => true,
+                'can_use_ai' => true,
             ])
             ->assertOk()
             ->assertJsonFragment([
                 'name' => 'Business',
+                'max_memories' => 500,
+                'max_categories' => 50,
+                'can_export' => true,
+                'can_use_ai' => true,
             ]);
 
         $this->actingAs($user)
