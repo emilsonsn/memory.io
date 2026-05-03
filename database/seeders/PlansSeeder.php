@@ -25,15 +25,27 @@ class PlansSeeder extends Seeder
         );
 
         Plan::updateOrCreate(
+            ['name' => 'Basic'],
+            [
+                'description' => 'Basic plan',
+                'amount' => 29.90,
+                'max_memories' => 500,
+                'max_categories' => 50,
+                'can_export' => true,
+                'can_use_ai' => false,
+            ],
+        );
+
+        Plan::updateOrCreate(
             ['name' => 'Premium'],
             [
                 'description' => 'Premium plan',
-                'amount' => 100,
+                'amount' => 99.90,
                 'max_memories' => 1000,
                 'max_categories' => 100,
                 'can_export' => true,
                 'can_use_ai' => true,
             ],
-        );        
+        );
     }
 }
