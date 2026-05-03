@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\Events\MemoryDeletedByScheduler;
 use App\Models\Memory;
 use App\Support\VersionedCache;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -32,6 +33,12 @@ class DeleteExpiredMemoriesJob implements ShouldQueue
                 ];
 
                 $memory->delete();
+
+                event(new MemoryDeletedByScheduler(
+                    memoryId: (string) $memory->id,
+                    userId: (string) $memory->user_id,
+                    memoryTitle: $memory->title,
+                ));
 
                 activity('audit')
                     ->performedOn($memory)

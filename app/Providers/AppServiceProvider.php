@@ -2,6 +2,10 @@
 
 namespace App\Providers;
 
+use App\Events\MemoryDeletedByScheduler;
+use App\Events\MemoryDeletionReminderTriggered;
+use App\Listeners\CreateMemoryDeletedNotification;
+use App\Listeners\CreateMemoryDeletionReminderNotification;
 use App\Models\Category;
 use App\Models\Memory;
 use App\Models\Notification;
@@ -11,6 +15,7 @@ use App\Policies\NotificationPolicy;
 use Dedoc\Scramble\Scramble;
 use Dedoc\Scramble\Support\Generator\OpenApi;
 use Dedoc\Scramble\Support\Generator\SecurityScheme;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
 
@@ -29,6 +34,9 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        Event::listen(MemoryDeletedByScheduler::class, CreateMemoryDeletedNotification::class);
+        Event::listen(MemoryDeletionReminderTriggered::class, CreateMemoryDeletionReminderNotification::class);
+
         Gate::policy(Memory::class, MemoryPolicy::class);
         Gate::policy(Category::class, CategoryPolicy::class);
         Gate::policy(Notification::class, NotificationPolicy::class);
