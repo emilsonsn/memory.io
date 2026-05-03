@@ -5,9 +5,8 @@ namespace App\Http\Requests;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
-use Illuminate\Validation\Rule;
 
-class StoreUserRequest extends FormRequest
+class StorePlanRequest extends FormRequest
 {
     public function authorize(): bool
     {
@@ -21,9 +20,8 @@ class StoreUserRequest extends FormRequest
     {
         return [
             'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'email', 'max:255', 'unique:users,email'],
-            'password' => ['required', 'string', 'min:8', 'confirmed'],
-            'plan_id' => ['nullable', 'uuid', Rule::exists('plans', 'id')],
+            'description' => ['nullable', 'string'],
+            'amount' => ['required', 'numeric', 'min:0', 'decimal:0,2'],
         ];
     }
 

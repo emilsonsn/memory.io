@@ -5,7 +5,7 @@ namespace App\Http\Resources;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
-class UserResource extends JsonResource
+class PlanResource extends JsonResource
 {
     /**
      * @return array<string, mixed>
@@ -15,10 +15,8 @@ class UserResource extends JsonResource
         return [
             'id' => $this->id,
             'name' => $this->name,
-            'email' => $this->email,
-            'plan_id' => $this->plan_id,
-            'plan' => PlanResource::make($this->whenLoaded('plan')),
-            'email_verified_at' => $this->email_verified_at,
+            'description' => $this->description,
+            'amount' => $this->amount,
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
         ];

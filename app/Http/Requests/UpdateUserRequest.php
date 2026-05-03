@@ -34,6 +34,7 @@ class UpdateUserRequest extends FormRequest
                 Rule::unique('users', 'email')->ignore($userId),
             ],
             'password' => ['sometimes', 'required', 'string', 'min:8', 'confirmed'],
+            'plan_id' => ['sometimes', 'nullable', 'uuid', Rule::exists('plans', 'id')],
         ];
     }
 
