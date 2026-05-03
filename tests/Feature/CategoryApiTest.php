@@ -292,7 +292,7 @@ class CategoryApiTest extends TestCase
         Storage::disk('public')->assertExists($relativePath);
 
         $zipPath = Storage::disk('public')->path($relativePath);
-        $zip = new ZipArchive();
+        $zip = new ZipArchive;
 
         $this->assertTrue($zip->open($zipPath) === true);
 

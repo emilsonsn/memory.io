@@ -6,8 +6,8 @@ use App\Enums\NotificationType;
 use App\Models\Category;
 use App\Models\Memory;
 use App\Models\Notification;
-use Illuminate\Support\Facades\File;
 use Illuminate\Filesystem\FilesystemAdapter;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use RuntimeException;
@@ -48,7 +48,7 @@ class CategoryExportService
         $zipAbsolutePath = $publicDisk->path($zipRelativePath);
         File::ensureDirectoryExists(dirname($zipAbsolutePath));
 
-        $zip = new ZipArchive();
+        $zip = new ZipArchive;
         $opened = $zip->open($zipAbsolutePath, ZipArchive::CREATE | ZipArchive::OVERWRITE);
 
         if ($opened !== true) {

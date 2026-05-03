@@ -30,7 +30,8 @@ class ChatApiTest extends TestCase
             'content' => 'Telefone da Maria: 11999998888',
         ]);
 
-        $this->instance(OpenAIChatClient::class, new class($memory) extends OpenAIChatClient {
+        $this->instance(OpenAIChatClient::class, new class($memory) extends OpenAIChatClient
+        {
             public function __construct(private readonly Memory $memory) {}
 
             public function chat(array $messages): array
@@ -64,7 +65,8 @@ class ChatApiTest extends TestCase
     {
         config()->set('openai.api_key', 'test-key');
 
-        $this->instance(OpenAIChatClient::class, new class extends OpenAIChatClient {
+        $this->instance(OpenAIChatClient::class, new class extends OpenAIChatClient
+        {
             public function chat(array $messages): array
             {
                 return [
