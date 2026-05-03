@@ -23,6 +23,13 @@ class IndexCategoryRequest extends FormRequest
         return [
             'per_page' => ['sometimes', 'integer', 'min:1', 'max:100'],
             'color' => ['sometimes', 'nullable', Rule::in(NoteColor::values())],
+            'sort_by' => ['sometimes', 'string', Rule::in([
+                'label',
+                'color',
+                'created_at',
+                'updated_at',
+            ])],
+            'sort_direction' => ['sometimes', 'string', Rule::in(['asc', 'desc'])],
         ];
     }
 

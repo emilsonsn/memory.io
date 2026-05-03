@@ -15,6 +15,21 @@ class MemoryService
 {
     use AuditsActivities;
 
+    private const DEFAULT_SORT_BY = 'created_at';
+
+    private const DEFAULT_SORT_DIRECTION = 'desc';
+
+    /**
+     * @var array<int, string>
+     */
+    private const SORTABLE_COLUMNS = [
+        'title',
+        'color',
+        'due_date',
+        'created_at',
+        'updated_at',
+    ];
+
     private Memory $memory;
 
     public function __construct(private readonly PlanLimitService $planLimitService) {}
@@ -48,6 +63,8 @@ class MemoryService
     public function getAll(int $perPage = 15, array $filters = []): LengthAwarePaginator
     {
         $categoryIds = $filters['category_ids'] ?? [];
+        $sortBy = $this->resolveSortBy($filters);
+        $sortDirection = $this->resolveSortDirection($filters);
 
         $query = Memory::query()
             ->with('categories');
@@ -81,7 +98,7 @@ class MemoryService
         });
 
         return $query
-            ->latest()
+            ->orderBy($sortBy, $sortDirection)
             ->paginate($perPage);
     }
 
@@ -213,5 +230,29 @@ class MemoryService
                 ->values()
                 ->all(),
         ];
+    }
+
+    /**
+     * @param  array<string, mixed>  $filters
+     */
+    private function resolveSortBy(array $filters): string
+    {
+        $sortBy = (string) ($filters['sort_by'] ?? self::DEFAULT_SORT_BY);
+
+        return in_array($sortBy, self::SORTABLE_COLUMNS, true)
+            ? $sortBy
+            : self::DEFAULT_SORT_BY;
+    }
+
+    /**
+     * @param  array<string, mixed>  $filters
+     */
+    private function resolveSortDirection(array $filters): string
+    {
+        $sortDirection = strtolower((string) ($filters['sort_direction'] ?? self::DEFAULT_SORT_DIRECTION));
+
+        return in_array($sortDirection, ['asc', 'desc'], true)
+            ? $sortDirection
+            : self::DEFAULT_SORT_DIRECTION;
     }
 }

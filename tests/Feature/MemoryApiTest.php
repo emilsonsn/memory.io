@@ -128,6 +128,35 @@ class MemoryApiTest extends TestCase
             ]);
     }
 
+    public function test_user_can_sort_memories(): void
+    {
+        $user = User::factory()->create();
+
+        Memory::factory()->for($user)->create([
+            'title' => 'Alpha memory',
+        ]);
+
+        Memory::factory()->for($user)->create([
+            'title' => 'Zulu memory',
+        ]);
+
+        $this->actingAs($user, 'api')
+            ->getJson('/api/memories?sort_by=title&sort_direction=desc')
+            ->assertOk()
+            ->assertJsonPath('data.0.title', 'Zulu memory')
+            ->assertJsonPath('data.1.title', 'Alpha memory');
+    }
+
+    public function test_user_cannot_sort_memories_by_unsupported_column(): void
+    {
+        $user = User::factory()->create();
+
+        $this->actingAs($user, 'api')
+            ->getJson('/api/memories?sort_by=user_id')
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('sort_by');
+    }
+
     public function test_user_can_list_logs_for_a_specific_memory(): void
     {
         $plan = Plan::factory()->create([

@@ -81,6 +81,35 @@ class CategoryApiTest extends TestCase
             ]);
     }
 
+    public function test_user_can_sort_categories(): void
+    {
+        $user = User::factory()->create();
+
+        Category::factory()->for($user)->create([
+            'label' => 'Work',
+        ]);
+
+        Category::factory()->for($user)->create([
+            'label' => 'Archive',
+        ]);
+
+        $this->actingAs($user, 'api')
+            ->getJson('/api/categories?sort_by=label&sort_direction=asc')
+            ->assertOk()
+            ->assertJsonPath('data.0.label', 'Archive')
+            ->assertJsonPath('data.1.label', 'Work');
+    }
+
+    public function test_user_cannot_sort_categories_by_unsupported_column(): void
+    {
+        $user = User::factory()->create();
+
+        $this->actingAs($user, 'api')
+            ->getJson('/api/categories?sort_by=user_id')
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('sort_by');
+    }
+
     public function test_user_can_create_category(): void
     {
         $plan = Plan::factory()->create([

@@ -36,6 +36,14 @@ class IndexMemoryRequest extends FormRequest
                 'distinct',
                 Rule::exists('categories', 'id')->where('user_id', auth()->id()),
             ],
+            'sort_by' => ['sometimes', 'string', Rule::in([
+                'title',
+                'color',
+                'due_date',
+                'created_at',
+                'updated_at',
+            ])],
+            'sort_direction' => ['sometimes', 'string', Rule::in(['asc', 'desc'])],
         ];
     }
 
