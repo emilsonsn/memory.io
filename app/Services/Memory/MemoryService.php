@@ -6,6 +6,7 @@ use App\Models\Category;
 use App\Models\Memory;
 use App\Services\Concerns\AuditsActivities;
 use App\Services\Plan\PlanLimitService;
+use App\Support\VersionedCache;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Str;
 use RuntimeException;
@@ -14,6 +15,10 @@ use Spatie\Activitylog\Models\Activity;
 class MemoryService
 {
     use AuditsActivities;
+
+    private const LIST_CACHE_TTL_SECONDS = 120;
+
+    private const LOGS_CACHE_TTL_SECONDS = 60;
 
     private Memory $memory;
 
@@ -49,38 +54,53 @@ class MemoryService
     {
         $categoryIds = $filters['category_ids'] ?? [];
 
-        $query = Memory::query()
-            ->with('categories');
+        $userId = auth()->id();
+        $page = request()->integer('page', 1);
 
-        $query->when(! empty($filters['text']), function ($query) use ($filters) {
-            $searchText = trim((string) $filters['text']);
+        return VersionedCache::remember(
+            namespace: 'memories.list',
+            params: [
+                'per_page' => $perPage,
+                'page' => $page,
+                'filters' => $filters,
+            ],
+            ttlSeconds: self::LIST_CACHE_TTL_SECONDS,
+            callback: function () use ($filters, $categoryIds, $perPage) {
+                $query = Memory::query()
+                    ->with('categories');
 
-            $query->where(function ($innerQuery) use ($searchText): void {
-                $innerQuery
-                    ->where('title', 'like', "%{$searchText}%")
-                    ->orWhere('content', 'like', "%{$searchText}%");
-            });
-        })->when(! empty($filters['created_from']), function ($query) use ($filters) {
-            $query->whereDate('created_at', '>=', (string) $filters['created_from']);
-        })->when(! empty($filters['created_to']), function ($query) use ($filters) {
-            $query->whereDate('created_at', '<=', (string) $filters['created_to']);
-        })->when(! empty($filters['updated_from']), function ($query) use ($filters) {
-            $query->whereDate('updated_at', '>=', (string) $filters['updated_from']);
-        })->when(! empty($filters['updated_to']), function ($query) use ($filters) {
-            $query->whereDate('updated_at', '<=', (string) $filters['updated_to']);
-        })->when(! empty($filters['due_from']), function ($query) use ($filters) {
-            $query->whereDate('due_date', '>=', (string) $filters['due_from']);
-        })->when(! empty($filters['due_to']), function ($query) use ($filters) {
-            $query->whereDate('due_date', '<=', (string) $filters['due_to']);
-        })->when(is_array($categoryIds) && $categoryIds !== [], function ($query) use ($categoryIds) {
-            $query->whereHas('categories', function ($categoriesQuery) use ($categoryIds): void {
-                $categoriesQuery->whereIn('categories.id', $categoryIds);
-            });
-        });
+                $query->when(! empty($filters['text']), function ($query) use ($filters) {
+                    $searchText = trim((string) $filters['text']);
 
-        return $query
-            ->latest()
-            ->paginate($perPage);
+                    $query->where(function ($innerQuery) use ($searchText): void {
+                        $innerQuery
+                            ->where('title', 'like', "%{$searchText}%")
+                            ->orWhere('content', 'like', "%{$searchText}%");
+                    });
+                })->when(! empty($filters['created_from']), function ($query) use ($filters) {
+                    $query->whereDate('created_at', '>=', (string) $filters['created_from']);
+                })->when(! empty($filters['created_to']), function ($query) use ($filters) {
+                    $query->whereDate('created_at', '<=', (string) $filters['created_to']);
+                })->when(! empty($filters['updated_from']), function ($query) use ($filters) {
+                    $query->whereDate('updated_at', '>=', (string) $filters['updated_from']);
+                })->when(! empty($filters['updated_to']), function ($query) use ($filters) {
+                    $query->whereDate('updated_at', '<=', (string) $filters['updated_to']);
+                })->when(! empty($filters['due_from']), function ($query) use ($filters) {
+                    $query->whereDate('due_date', '>=', (string) $filters['due_from']);
+                })->when(! empty($filters['due_to']), function ($query) use ($filters) {
+                    $query->whereDate('due_date', '<=', (string) $filters['due_to']);
+                })->when(is_array($categoryIds) && $categoryIds !== [], function ($query) use ($categoryIds) {
+                    $query->whereHas('categories', function ($categoriesQuery) use ($categoryIds): void {
+                        $categoriesQuery->whereIn('categories.id', $categoryIds);
+                    });
+                });
+
+                return $query
+                    ->latest()
+                    ->paginate($perPage);
+            },
+            scope: $userId,
+        );
     }
 
     public function create(array $data): Memory
@@ -100,6 +120,8 @@ class MemoryService
             'new' => $this->memoryAuditSnapshot($memory),
             'changed_fields' => ['title', 'content', 'due_date', 'category_ids'],
         ]);
+
+        $this->invalidateCacheForMemory($memory);
 
         return $memory;
     }
@@ -128,6 +150,8 @@ class MemoryService
             'changed_fields' => $this->resolveChangedFields($before, $after),
         ]);
 
+        $this->invalidateCacheForMemory($memory);
+
         return $memory;
     }
 
@@ -146,16 +170,31 @@ class MemoryService
             'changed_fields' => array_keys($before),
         ]);
 
+        $this->invalidateCacheForMemory($memory);
+
         return $this;
     }
 
     public function getLogs(Memory $memory, int $perPage = 15): LengthAwarePaginator
     {
-        return Activity::query()
-            ->where('subject_type', Memory::class)
-            ->where('subject_id', $memory->id)
-            ->latest()
-            ->paginate($perPage);
+        $userId = auth()->id();
+        $page = request()->integer('page', 1);
+
+        return VersionedCache::remember(
+            namespace: 'memories.logs',
+            params: [
+                'memory_id' => $memory->id,
+                'per_page' => $perPage,
+                'page' => $page,
+            ],
+            ttlSeconds: self::LOGS_CACHE_TTL_SECONDS,
+            callback: static fn () => Activity::query()
+                ->where('subject_type', Memory::class)
+                ->where('subject_id', $memory->id)
+                ->latest()
+                ->paginate($perPage),
+            scope: $userId,
+        );
     }
 
     /**
@@ -210,6 +249,12 @@ class MemoryService
                 ->values()
                 ->all(),
         ];
+    }
+
+    private function invalidateCacheForMemory(Memory $memory): void
+    {
+        VersionedCache::bump('memories.list', $memory->user_id);
+        VersionedCache::bump('memories.logs', $memory->user_id);
     }
 
 }

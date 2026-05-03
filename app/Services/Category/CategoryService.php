@@ -5,12 +5,15 @@ namespace App\Services\Category;
 use App\Models\Category;
 use App\Services\Concerns\AuditsActivities;
 use App\Services\Plan\PlanLimitService;
+use App\Support\VersionedCache;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use RuntimeException;
 
 class CategoryService
 {
     use AuditsActivities;
+
+    private const LIST_CACHE_TTL_SECONDS = 300;
 
     private Category $category;
 
@@ -42,10 +45,22 @@ class CategoryService
 
     public function getAll(int $perPage = 15): LengthAwarePaginator
     {
-        return Category::query()
-            ->with('parent')
-            ->latest()
-            ->paginate($perPage);
+        $userId = auth()->id();
+        $page = request()->integer('page', 1);
+
+        return VersionedCache::remember(
+            namespace: 'categories.list',
+            params: [
+                'per_page' => $perPage,
+                'page' => $page,
+            ],
+            ttlSeconds: self::LIST_CACHE_TTL_SECONDS,
+            callback: static fn () => Category::query()
+                ->with('parent')
+                ->latest()
+                ->paginate($perPage),
+            scope: $userId,
+        );
     }
 
     public function create(array $data): Category
@@ -61,6 +76,8 @@ class CategoryService
             'new' => $this->categoryAuditSnapshot($category),
             'changed_fields' => ['label', 'description', 'parent_id'],
         ]);
+
+        VersionedCache::bump('categories.list', $category->user_id);
 
         return $category;
     }
@@ -82,6 +99,8 @@ class CategoryService
             'changed_fields' => $this->resolveChangedFields($before, $after),
         ]);
 
+        VersionedCache::bump('categories.list', $category->user_id);
+
         return $category;
     }
 
@@ -99,6 +118,8 @@ class CategoryService
             'new' => null,
             'changed_fields' => array_keys($before),
         ]);
+
+        VersionedCache::bump('categories.list', $category->user_id);
 
         return $this;
     }

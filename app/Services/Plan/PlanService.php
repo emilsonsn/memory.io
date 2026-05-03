@@ -3,11 +3,14 @@
 namespace App\Services\Plan;
 
 use App\Models\Plan;
+use App\Support\VersionedCache;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use RuntimeException;
 
 class PlanService
 {
+    private const LIST_CACHE_TTL_SECONDS = 300;
+
     private Plan $plan;
 
     public function setPlan(Plan $plan): self
@@ -31,14 +34,26 @@ class PlanService
 
     public function getAll(int $perPage = 15): LengthAwarePaginator
     {
-        return Plan::query()
-            ->latest()
-            ->paginate($perPage);
+        $page = request()->integer('page', 1);
+
+        return VersionedCache::remember(
+            namespace: 'plans.list',
+            params: [
+                'per_page' => $perPage,
+                'page' => $page,
+            ],
+            ttlSeconds: self::LIST_CACHE_TTL_SECONDS,
+            callback: static fn () => Plan::query()
+                ->latest()
+                ->paginate($perPage),
+        );
     }
 
     public function create(array $data): Plan
     {
         $this->plan = Plan::create($data);
+
+        VersionedCache::bump('plans.list');
 
         return $this->object();
     }
@@ -49,6 +64,8 @@ class PlanService
 
         $this->plan->update($data);
 
+        VersionedCache::bump('plans.list');
+
         return $this->object();
     }
 
@@ -56,6 +73,8 @@ class PlanService
     {
         $this->verifyPlanIsSet();
         $this->plan->delete();
+
+        VersionedCache::bump('plans.list');
 
         return $this;
     }

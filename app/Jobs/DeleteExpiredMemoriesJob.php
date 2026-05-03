@@ -3,6 +3,7 @@
 namespace App\Jobs;
 
 use App\Models\Memory;
+use App\Support\VersionedCache;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Carbon;
@@ -43,6 +44,9 @@ class DeleteExpiredMemoriesJob implements ShouldQueue
                         'deleted_by' => 'scheduler',
                     ])
                     ->log('memory.deleted_due_date');
+
+                VersionedCache::bump('memories.list', $memory->user_id);
+                VersionedCache::bump('memories.logs', $memory->user_id);
             });
     }
 }
