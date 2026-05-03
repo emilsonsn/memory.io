@@ -12,7 +12,7 @@ concurrency:
 
 jobs:
   lint_format:
-    name: Lint and Format
+    name: Pint and Format
     runs-on: ubuntu-latest
 
     steps:
