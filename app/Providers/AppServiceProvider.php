@@ -2,8 +2,10 @@
 
 namespace App\Providers;
 
+use App\Events\CategoryExportRequested;
 use App\Events\MemoryDeletedByScheduler;
 use App\Events\MemoryDeletionReminderTriggered;
+use App\Listeners\ProcessCategoryExportRequested;
 use App\Listeners\CreateMemoryDeletedNotification;
 use App\Listeners\CreateMemoryDeletionReminderNotification;
 use App\Models\Category;
@@ -34,6 +36,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        Event::listen(CategoryExportRequested::class, ProcessCategoryExportRequested::class);
         Event::listen(MemoryDeletedByScheduler::class, CreateMemoryDeletedNotification::class);
         Event::listen(MemoryDeletionReminderTriggered::class, CreateMemoryDeletionReminderNotification::class);
 

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Events\CategoryExportRequested;
 use App\Http\Requests\Category\IndexCategoryRequest;
 use App\Http\Requests\Category\StoreCategoryRequest;
 use App\Http\Requests\Category\UpdateCategoryRequest;
@@ -94,5 +95,21 @@ class CategoryController extends Controller
             'message' => 'Category deleted successfully.',
             'data' => null,
         ]);
+    }
+
+    public function export(Category $category): JsonResponse
+    {
+        $this->authorize('export', $category);
+
+        event(new CategoryExportRequested(
+            categoryId: (string) $category->id,
+            userId: (string) auth()->id(),
+        ));
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Category export started. You will be notified when it is ready.',
+            'data' => null,
+        ], 202);
     }
 }

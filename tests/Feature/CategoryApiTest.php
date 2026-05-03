@@ -2,12 +2,18 @@
 
 namespace Tests\Feature;
 
+use App\Enums\NotificationType;
 use App\Models\Category;
+use App\Models\Memory;
+use App\Models\Notification;
 use App\Models\Plan;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Spatie\Activitylog\Models\Activity;
 use Tests\TestCase;
+use ZipArchive;
 
 class CategoryApiTest extends TestCase
 {
@@ -237,5 +243,68 @@ class CategoryApiTest extends TestCase
             ])
             ->assertForbidden()
             ->assertJsonPath('code', 'PLAN_LIMIT_EXCEEDED');
+    }
+
+    public function test_user_can_request_category_export_and_receive_notification_with_download_link(): void
+    {
+        Storage::fake('public');
+
+        $user = User::factory()->create();
+
+        $root = Category::factory()->for($user)->create([
+            'label' => 'Root Folder',
+            'parent_id' => null,
+        ]);
+
+        $child = Category::factory()->for($user)->create([
+            'label' => 'Child Folder',
+            'parent_id' => $root->id,
+        ]);
+
+        $rootMemory = Memory::factory()->for($user)->create([
+            'title' => 'Root Note',
+            'content' => 'Root content',
+        ]);
+        $rootMemory->categories()->sync([$root->id]);
+
+        $childMemory = Memory::factory()->for($user)->create([
+            'title' => 'Child Note',
+            'content' => 'Child content',
+        ]);
+        $childMemory->categories()->sync([$child->id]);
+
+        $this->actingAs($user, 'api')
+            ->postJson("/api/categories/{$root->id}/export")
+            ->assertStatus(202)
+            ->assertJsonPath('success', true);
+
+        $notification = Notification::withoutGlobalScopes()
+            ->where('user_id', $user->id)
+            ->where('type', NotificationType::PROCESS->value)
+            ->latest()
+            ->firstOrFail();
+
+        $this->assertStringContainsString('/storage/exports/categories/'.$user->id.'/', (string) $notification->url);
+
+        $urlPath = parse_url((string) $notification->url, PHP_URL_PATH) ?? '';
+        $relativePath = Str::after($urlPath, '/storage/');
+
+        Storage::disk('public')->assertExists($relativePath);
+
+        $zipPath = Storage::disk('public')->path($relativePath);
+        $zip = new ZipArchive();
+
+        $this->assertTrue($zip->open($zipPath) === true);
+
+        $rootFile = 'Root Folder/Root Note.txt';
+        $childFile = 'Root Folder/Child Folder/Child Note.txt';
+
+        $this->assertNotFalse($zip->locateName($rootFile));
+        $this->assertNotFalse($zip->locateName($childFile));
+
+        $this->assertSame("Root Note\nRoot content", $zip->getFromName($rootFile));
+        $this->assertSame("Child Note\nChild content", $zip->getFromName($childFile));
+
+        $zip->close();
     }
 }

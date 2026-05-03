@@ -31,4 +31,9 @@ class CategoryPolicy
     {
         return $user->isAdmin() || $category->user_id === $user->id;
     }
+
+    public function export(User $user, Category $category): bool
+    {
+        return $this->view($user, $category);
+    }
 }

@@ -36,6 +36,10 @@ Route::middleware('auth:api')->group(function (): void {
         Route::get('{memory}/export', [MemoryController::class, 'export'])->name('export');
     });
 
+    Route::prefix('categories')->name('categories.')->group(function (): void {
+        Route::post('{category}/export', [CategoryController::class, 'export'])->name('export');
+    });
+
     Route::apiResource('plans', PlanController::class)->middleware('role:'.UserRole::ADMIN->value);
     Route::apiResource('users', UserController::class)->except('store')->middleware('role:'.UserRole::ADMIN->value);
     Route::apiResource('categories', CategoryController::class);
