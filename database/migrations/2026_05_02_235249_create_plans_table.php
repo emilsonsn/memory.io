@@ -16,6 +16,7 @@ return new class extends Migration
             $table->string('name');
             $table->text('description')->nullable();
             $table->decimal('amount', 8, 2);
+            $table->unsignedInteger('memory_limit')->nullable();
             $table->timestamps();
         });
     }

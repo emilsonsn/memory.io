@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\Plan;
 use App\Models\User;
+use Database\Seeders\RolesAndPermissionsSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
 use Tests\TestCase;
@@ -55,11 +56,26 @@ class UserApiTest extends TestCase
             ->assertUnauthorized();
     }
 
+    public function test_regular_user_cannot_list_users(): void
+    {
+        $this->seed(RolesAndPermissionsSeeder::class);
+
+        $user = User::factory()->create();
+        $user->assignRole('user');
+
+        $this->actingAs($user)
+            ->getJson('/api/users')
+            ->assertForbidden();
+    }
+
     public function test_authenticated_user_can_list_users(): void
     {
+        $this->seed(RolesAndPermissionsSeeder::class);
+
         $user = User::factory()->create([
             'name' => 'Visible User',
         ]);
+        $user->assignRole('admin');
 
         $this->actingAs($user)
             ->getJson('/api/users')
@@ -73,7 +89,10 @@ class UserApiTest extends TestCase
 
     public function test_authenticated_user_can_show_update_and_delete_user(): void
     {
+        $this->seed(RolesAndPermissionsSeeder::class);
+
         $user = User::factory()->create();
+        $user->assignRole('admin');
         $targetUser = User::factory()->create([
             'name' => 'Old Name',
         ]);
@@ -108,7 +127,10 @@ class UserApiTest extends TestCase
 
     public function test_user_plan_cannot_be_updated_through_user_endpoint(): void
     {
+        $this->seed(RolesAndPermissionsSeeder::class);
+
         $user = User::factory()->create();
+        $user->assignRole('admin');
         $currentPlan = Plan::factory()->create();
         $newPlan = Plan::factory()->create();
         $targetUser = User::factory()->create([

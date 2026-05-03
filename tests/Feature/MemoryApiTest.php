@@ -4,7 +4,9 @@ namespace Tests\Feature;
 
 use App\Models\Category;
 use App\Models\Memory;
+use App\Models\Plan;
 use App\Models\User;
+use Database\Seeders\RolesAndPermissionsSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -46,7 +48,10 @@ class MemoryApiTest extends TestCase
 
     public function test_user_can_create_memory_with_categories(): void
     {
-        $user = User::factory()->create();
+        $plan = Plan::factory()->create([
+            'memory_limit' => 100,
+        ]);
+        $user = User::factory()->for($plan)->create();
         $category = Category::factory()->for($user)->create();
 
         $this->actingAs($user)
@@ -80,7 +85,10 @@ class MemoryApiTest extends TestCase
 
     public function test_user_cannot_attach_another_users_category_to_memory(): void
     {
-        $user = User::factory()->create();
+        $plan = Plan::factory()->create([
+            'memory_limit' => 100,
+        ]);
+        $user = User::factory()->for($plan)->create();
         $otherUser = User::factory()->create();
         $otherUsersCategory = Category::factory()->for($otherUser)->create();
 
@@ -97,7 +105,10 @@ class MemoryApiTest extends TestCase
 
     public function test_user_can_update_and_delete_memory(): void
     {
-        $user = User::factory()->create();
+        $plan = Plan::factory()->create([
+            'memory_limit' => 100,
+        ]);
+        $user = User::factory()->for($plan)->create();
         $memory = Memory::factory()->for($user)->create([
             'title' => 'Old title',
         ]);
@@ -119,5 +130,45 @@ class MemoryApiTest extends TestCase
         $this->assertSoftDeleted('memories', [
             'id' => $memory->id,
         ]);
+    }
+
+    public function test_user_cannot_create_memory_after_reaching_plan_limit(): void
+    {
+        $plan = Plan::factory()->create([
+            'memory_limit' => 1,
+        ]);
+        $user = User::factory()->for($plan)->create();
+
+        Memory::factory()->for($user)->create();
+
+        $this->actingAs($user)
+            ->postJson('/api/memories', [
+                'title' => 'Blocked memory',
+                'content' => 'This should not be created.',
+                'due_date' => now()->addDay()->toISOString(),
+            ])
+            ->assertForbidden()
+            ->assertJsonPath('code', 'PLAN_LIMIT_EXCEEDED');
+    }
+
+    public function test_admin_can_create_memory_without_plan_limit(): void
+    {
+        $this->seed(RolesAndPermissionsSeeder::class);
+
+        $user = User::factory()->create([
+            'plan_id' => null,
+        ]);
+        $user->assignRole('admin');
+
+        $this->actingAs($user)
+            ->postJson('/api/memories', [
+                'title' => 'Admin memory',
+                'content' => 'Admins are not limited by plans.',
+                'due_date' => now()->addDay()->toISOString(),
+            ])
+            ->assertCreated()
+            ->assertJsonFragment([
+                'title' => 'Admin memory',
+            ]);
     }
 }

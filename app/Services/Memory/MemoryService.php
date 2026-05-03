@@ -4,12 +4,15 @@ namespace App\Services\Memory;
 
 use App\Models\Category;
 use App\Models\Memory;
+use App\Services\Plan\PlanLimitService;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use RuntimeException;
 
 class MemoryService
 {
     private Memory $memory;
+
+    public function __construct(private readonly PlanLimitService $planLimitService) {}
 
     public function setMemory(Memory $memory): self
     {
@@ -44,6 +47,8 @@ class MemoryService
 
     public function create(array $data): Memory
     {
+        $this->planLimitService->ensureCanCreateMemory(auth()->user());
+
         $categoryIds = $data['category_ids'] ?? [];
         unset($data['category_ids']);
 

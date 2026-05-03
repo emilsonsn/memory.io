@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\Plan;
 use App\Models\User;
+use Database\Seeders\RolesAndPermissionsSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -17,9 +18,24 @@ class PlanApiTest extends TestCase
             ->assertUnauthorized();
     }
 
+    public function test_regular_user_cannot_access_plans(): void
+    {
+        $this->seed(RolesAndPermissionsSeeder::class);
+
+        $user = User::factory()->create();
+        $user->assignRole('user');
+
+        $this->actingAs($user)
+            ->getJson('/api/plans')
+            ->assertForbidden();
+    }
+
     public function test_authenticated_user_can_list_plans(): void
     {
+        $this->seed(RolesAndPermissionsSeeder::class);
+
         $user = User::factory()->create();
+        $user->assignRole('admin');
         $plan = Plan::factory()->create([
             'name' => 'Premium',
         ]);
@@ -36,13 +52,17 @@ class PlanApiTest extends TestCase
 
     public function test_authenticated_user_can_create_plan(): void
     {
+        $this->seed(RolesAndPermissionsSeeder::class);
+
         $user = User::factory()->create();
+        $user->assignRole('admin');
 
         $this->actingAs($user)
             ->postJson('/api/plans', [
                 'name' => 'Starter',
                 'description' => 'Starter plan',
                 'amount' => '19.90',
+                'memory_limit' => 100,
             ])
             ->assertCreated()
             ->assertJsonPath('success', true)
@@ -59,7 +79,10 @@ class PlanApiTest extends TestCase
 
     public function test_authenticated_user_can_show_update_and_delete_plan(): void
     {
+        $this->seed(RolesAndPermissionsSeeder::class);
+
         $user = User::factory()->create();
+        $user->assignRole('admin');
         $plan = Plan::factory()->create([
             'name' => 'Basic',
             'amount' => '9.90',
@@ -76,6 +99,7 @@ class PlanApiTest extends TestCase
             ->patchJson("/api/plans/{$plan->id}", [
                 'name' => 'Business',
                 'amount' => '49.90',
+                'memory_limit' => 500,
             ])
             ->assertOk()
             ->assertJsonFragment([

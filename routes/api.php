@@ -9,8 +9,8 @@ use Illuminate\Support\Facades\Route;
 Route::post('users', [UserController::class, 'store'])->name('users.store');
 
 Route::middleware('auth')->group(function (): void {
-    Route::apiResource('plans', PlanController::class);
-    Route::apiResource('users', UserController::class)->except('store');
+    Route::apiResource('plans', PlanController::class)->middleware('role:admin');
+    Route::apiResource('users', UserController::class)->except('store')->middleware('role:admin');
     Route::apiResource('categories', CategoryController::class);
     Route::apiResource('memories', MemoryController::class);
 });

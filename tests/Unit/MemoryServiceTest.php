@@ -2,8 +2,10 @@
 
 namespace Tests\Unit;
 
+use App\Exceptions\PlanLimitExceededException;
 use App\Models\Category;
 use App\Models\Memory;
+use App\Models\Plan;
 use App\Models\User;
 use App\Services\Memory\MemoryService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -15,7 +17,10 @@ class MemoryServiceTest extends TestCase
 
     public function test_it_creates_memory_for_authenticated_user(): void
     {
-        $user = User::factory()->create();
+        $plan = Plan::factory()->create([
+            'memory_limit' => 100,
+        ]);
+        $user = User::factory()->for($plan)->create();
 
         $this->actingAs($user);
 
@@ -34,7 +39,10 @@ class MemoryServiceTest extends TestCase
 
     public function test_it_syncs_only_owned_categories(): void
     {
-        $user = User::factory()->create();
+        $plan = Plan::factory()->create([
+            'memory_limit' => 100,
+        ]);
+        $user = User::factory()->for($plan)->create();
         $otherUser = User::factory()->create();
         $ownedCategory = Category::factory()->for($user)->create();
         $otherUsersCategory = Category::factory()->for($otherUser)->create();
@@ -74,5 +82,24 @@ class MemoryServiceTest extends TestCase
         $memories = app(MemoryService::class)->getAll();
 
         $this->assertSame(1, $memories->total());
+    }
+
+    public function test_it_blocks_memory_creation_after_plan_limit(): void
+    {
+        $plan = Plan::factory()->create([
+            'memory_limit' => 1,
+        ]);
+        $user = User::factory()->for($plan)->create();
+
+        Memory::factory()->for($user)->create();
+
+        $this->actingAs($user);
+
+        $this->expectException(PlanLimitExceededException::class);
+
+        app(MemoryService::class)->create([
+            'title' => 'Blocked memory',
+            'content' => 'This should not be created.',
+        ]);
     }
 }

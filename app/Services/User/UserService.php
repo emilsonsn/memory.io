@@ -6,6 +6,7 @@ use App\Models\Plan;
 use App\Models\User;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use RuntimeException;
+use Spatie\Permission\Models\Role;
 
 class UserService
 {
@@ -45,6 +46,7 @@ class UserService
     public function create(array $data): User
     {
         $this->user = User::create($data);
+        $this->user->assignRole(Role::findOrCreate('user'));
 
         return $this->object();
     }

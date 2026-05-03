@@ -22,6 +22,7 @@ class UpdatePlanRequest extends FormRequest
             'name' => ['sometimes', 'required', 'string', 'max:255'],
             'description' => ['sometimes', 'nullable', 'string'],
             'amount' => ['sometimes', 'required', 'numeric', 'min:0', 'decimal:0,2'],
+            'memory_limit' => ['sometimes', 'nullable', 'integer', 'min:0'],
         ];
     }
 
