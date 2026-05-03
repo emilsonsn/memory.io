@@ -36,6 +36,7 @@ class IndexMemoryRequest extends FormRequest
                 'distinct',
                 Rule::exists('categories', 'id')->where('user_id', auth()->id()),
             ],
+            'without_categories' => ['sometimes', 'boolean'],
             'sort_by' => ['sometimes', 'string', Rule::in([
                 'title',
                 'color',
@@ -50,12 +51,35 @@ class IndexMemoryRequest extends FormRequest
     protected function prepareForValidation(): void
     {
         $categoryIds = $this->input('category_ids');
+        $withoutCategories = $this->input('without_categories');
 
         if (is_string($categoryIds)) {
             $this->merge([
                 'category_ids' => array_values(array_filter(array_map('trim', explode(',', $categoryIds)))),
             ]);
         }
+
+        if (is_string($withoutCategories)) {
+            $normalizedWithoutCategories = filter_var($withoutCategories, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE);
+
+            if ($normalizedWithoutCategories !== null) {
+                $this->merge([
+                    'without_categories' => $normalizedWithoutCategories,
+                ]);
+            }
+        }
+    }
+
+    public function withValidator(Validator $validator): void
+    {
+        $validator->after(function (Validator $validator): void {
+            if ($this->boolean('without_categories') && $this->has('category_ids')) {
+                $validator->errors()->add(
+                    'without_categories',
+                    'The without categories filter cannot be combined with category ids.'
+                );
+            }
+        });
     }
 
     protected function failedValidation(Validator $validator): void

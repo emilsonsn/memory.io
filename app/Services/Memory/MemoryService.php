@@ -63,6 +63,7 @@ class MemoryService
     public function getAll(int $perPage = 15, array $filters = []): LengthAwarePaginator
     {
         $categoryIds = $filters['category_ids'] ?? [];
+        $withoutCategories = (bool) ($filters['without_categories'] ?? false);
         $sortBy = $this->resolveSortBy($filters);
         $sortDirection = $this->resolveSortDirection($filters);
 
@@ -91,7 +92,9 @@ class MemoryService
             $query->whereDate('due_date', '<=', (string) $filters['due_to']);
         })->when(! empty($filters['color']), function ($query) use ($filters) {
             $query->where('color', (string) $filters['color']);
-        })->when(is_array($categoryIds) && $categoryIds !== [], function ($query) use ($categoryIds) {
+        })->when($withoutCategories, function ($query) {
+            $query->whereDoesntHave('categories');
+        })->when(! $withoutCategories && is_array($categoryIds) && $categoryIds !== [], function ($query) use ($categoryIds) {
             $query->whereHas('categories', function ($categoriesQuery) use ($categoryIds): void {
                 $categoriesQuery->whereIn('categories.id', $categoryIds);
             });

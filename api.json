@@ -1196,6 +1196,13 @@
                         }
                     },
                     {
+                        "name": "without_categories",
+                        "in": "query",
+                        "schema": {
+                            "type": "boolean"
+                        }
+                    },
+                    {
                         "name": "sort_by",
                         "in": "query",
                         "schema": {

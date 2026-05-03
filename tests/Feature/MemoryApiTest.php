@@ -128,6 +128,57 @@ class MemoryApiTest extends TestCase
             ]);
     }
 
+    public function test_user_can_filter_memories_without_categories(): void
+    {
+        $user = User::factory()->create();
+        $otherUser = User::factory()->create();
+        $category = Category::factory()->for($user)->create();
+
+        $uncategorizedMemory = Memory::factory()->for($user)->create([
+            'title' => 'Loose note',
+        ]);
+
+        $categorizedMemory = Memory::factory()->for($user)->create([
+            'title' => 'Categorized note',
+        ]);
+        $categorizedMemory->categories()->sync([$category->id]);
+
+        Memory::factory()->for($otherUser)->create([
+            'title' => 'Other loose note',
+        ]);
+
+        $this->actingAs($user, 'api')
+            ->getJson('/api/memories?without_categories=true')
+            ->assertOk()
+            ->assertJsonPath('success', true)
+            ->assertJsonFragment([
+                'id' => $uncategorizedMemory->id,
+                'title' => 'Loose note',
+            ])
+            ->assertJsonMissing([
+                'id' => $categorizedMemory->id,
+            ])
+            ->assertJsonMissing([
+                'title' => 'Other loose note',
+            ]);
+    }
+
+    public function test_user_cannot_combine_without_categories_with_category_ids(): void
+    {
+        $user = User::factory()->create();
+        $category = Category::factory()->for($user)->create();
+
+        $query = http_build_query([
+            'without_categories' => true,
+            'category_ids' => [$category->id],
+        ]);
+
+        $this->actingAs($user, 'api')
+            ->getJson("/api/memories?{$query}")
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('without_categories');
+    }
+
     public function test_user_can_sort_memories(): void
     {
         $user = User::factory()->create();
