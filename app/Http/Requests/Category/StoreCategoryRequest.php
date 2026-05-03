@@ -1,12 +1,13 @@
 <?php
 
-namespace App\Http\Requests;
+namespace App\Http\Requests\Category;
 
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
+use Illuminate\Validation\Rule;
 
-class UpdatePlanRequest extends FormRequest
+class StoreCategoryRequest extends FormRequest
 {
     public function authorize(): bool
     {
@@ -19,13 +20,13 @@ class UpdatePlanRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name' => ['sometimes', 'required', 'string', 'max:255'],
-            'description' => ['sometimes', 'nullable', 'string'],
-            'amount' => ['sometimes', 'required', 'numeric', 'min:0', 'decimal:0,2'],
-            'max_memories' => ['sometimes', 'nullable', 'integer', 'min:0'],
-            'max_categories' => ['sometimes', 'nullable', 'integer', 'min:0'],
-            'can_export' => ['sometimes', 'boolean'],
-            'can_use_ai' => ['sometimes', 'boolean'],
+            'label' => ['required', 'string', 'max:255'],
+            'description' => ['required', 'string', 'max:255'],
+            'parent_id' => [
+                'nullable',
+                'uuid',
+                Rule::exists('categories', 'id')->where('user_id', auth()->id()),
+            ],
         ];
     }
 

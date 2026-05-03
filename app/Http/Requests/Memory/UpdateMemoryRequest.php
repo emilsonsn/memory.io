@@ -1,13 +1,13 @@
 <?php
 
-namespace App\Http\Requests;
+namespace App\Http\Requests\Memory;
 
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Validation\Rule;
 
-class UpdateCategoryRequest extends FormRequest
+class UpdateMemoryRequest extends FormRequest
 {
     public function authorize(): bool
     {
@@ -19,20 +19,15 @@ class UpdateCategoryRequest extends FormRequest
      */
     public function rules(): array
     {
-        $category = $this->route('category') ?? $this->route('id');
-        $categoryId = is_object($category) && method_exists($category, 'getKey')
-            ? $category->getKey()
-            : $category;
-
         return [
-            'label' => ['sometimes', 'required', 'string', 'max:255'],
-            'description' => ['sometimes', 'required', 'string', 'max:255'],
-            'parent_id' => [
-                'sometimes',
-                'nullable',
+            'title' => ['sometimes', 'required', 'string', 'max:255'],
+            'content' => ['sometimes', 'required', 'string'],
+            'due_date' => ['sometimes', 'nullable', 'date'],
+            'category_ids' => ['sometimes', 'array'],
+            'category_ids.*' => [
                 'uuid',
+                'distinct',
                 Rule::exists('categories', 'id')->where('user_id', auth()->id()),
-                Rule::notIn(array_filter([$categoryId])),
             ],
         ];
     }
