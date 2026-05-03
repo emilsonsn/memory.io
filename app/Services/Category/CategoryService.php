@@ -5,15 +5,12 @@ namespace App\Services\Category;
 use App\Models\Category;
 use App\Services\Concerns\AuditsActivities;
 use App\Services\Plan\PlanLimitService;
-use App\Support\VersionedCache;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use RuntimeException;
 
 class CategoryService
 {
     use AuditsActivities;
-
-    private const LIST_CACHE_TTL_SECONDS = 300;
 
     private Category $category;
 
@@ -48,31 +45,16 @@ class CategoryService
      */
     public function getAll(int $perPage = 15, array $filters = []): LengthAwarePaginator
     {
-        $userId = auth()->id();
-        $page = request()->integer('page', 1);
+        $query = Category::query()
+            ->with('parent');
 
-        return VersionedCache::remember(
-            namespace: 'categories.list',
-            params: [
-                'per_page' => $perPage,
-                'page' => $page,
-                'filters' => $filters,
-            ],
-            ttlSeconds: self::LIST_CACHE_TTL_SECONDS,
-            callback: static function () use ($perPage, $filters) {
-                $query = Category::query()
-                    ->with('parent');
+        $query->when(! empty($filters['color']), function ($query) use ($filters) {
+            $query->where('color', (string) $filters['color']);
+        });
 
-                $query->when(! empty($filters['color']), function ($query) use ($filters) {
-                    $query->where('color', (string) $filters['color']);
-                });
-
-                return $query
-                    ->latest()
-                    ->paginate($perPage);
-            },
-            scope: $userId,
-        );
+        return $query
+            ->latest()
+            ->paginate($perPage);
     }
 
     public function create(array $data): Category
@@ -88,8 +70,6 @@ class CategoryService
             'new' => $this->categoryAuditSnapshot($category),
             'changed_fields' => ['label', 'description', 'color', 'parent_id'],
         ]);
-
-        VersionedCache::bump('categories.list', $category->user_id);
 
         return $category;
     }
@@ -111,8 +91,6 @@ class CategoryService
             'changed_fields' => $this->resolveChangedFields($before, $after),
         ]);
 
-        VersionedCache::bump('categories.list', $category->user_id);
-
         return $category;
     }
 
@@ -130,8 +108,6 @@ class CategoryService
             'new' => null,
             'changed_fields' => array_keys($before),
         ]);
-
-        VersionedCache::bump('categories.list', $category->user_id);
 
         return $this;
     }

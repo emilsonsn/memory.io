@@ -5,15 +5,12 @@ namespace App\Services\User;
 use App\Enums\UserRole;
 use App\Models\Plan;
 use App\Models\User;
-use App\Support\VersionedCache;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use RuntimeException;
 use Spatie\Permission\Models\Role;
 
 class UserService
 {
-    private const LIST_CACHE_TTL_SECONDS = 300;
-
     private User $user;
 
     public function setUser(User $user): self
@@ -41,28 +38,16 @@ class UserService
 
     public function getAll(int $perPage = 15): LengthAwarePaginator
     {
-        $page = request()->integer('page', 1);
-
-        return VersionedCache::remember(
-            namespace: 'users.list',
-            params: [
-                'per_page' => $perPage,
-                'page' => $page,
-            ],
-            ttlSeconds: self::LIST_CACHE_TTL_SECONDS,
-            callback: static fn () => User::query()
-                ->with('plan')
-                ->latest()
-                ->paginate($perPage),
-        );
+        return User::query()
+            ->with('plan')
+            ->latest()
+            ->paginate($perPage);
     }
 
     public function create(array $data): User
     {
         $this->user = User::create($data);
         $this->user->assignRole(Role::findOrCreate(UserRole::USER->value));
-
-        VersionedCache::bump('users.list');
 
         return $this->object();
     }
@@ -73,8 +58,6 @@ class UserService
         unset($data['plan_id']);
 
         $this->user->update($data);
-
-        VersionedCache::bump('users.list');
 
         return $this->object();
     }
@@ -87,8 +70,6 @@ class UserService
             'plan_id' => $plan instanceof Plan ? $plan->id : $plan,
         ])->save();
 
-        VersionedCache::bump('users.list');
-
         return $this->object();
     }
 
@@ -96,8 +77,6 @@ class UserService
     {
         $this->verifyUserIsSet();
         $this->user->delete();
-
-        VersionedCache::bump('users.list');
 
         return $this;
     }

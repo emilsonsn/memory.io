@@ -7,7 +7,6 @@ use App\Enums\MemoryDeletionReason;
 use App\Enums\SystemActor;
 use App\Events\MemoryDeletedByScheduler;
 use App\Models\Memory;
-use App\Support\VersionedCache;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Carbon;
@@ -54,9 +53,6 @@ class DeleteExpiredMemoriesJob implements ShouldQueue
                         'deleted_by' => SystemActor::SCHEDULER->value,
                     ])
                     ->log(MemoryAuditEvent::DELETED_DUE_DATE->value);
-
-                VersionedCache::bump('memories.list', $memory->user_id);
-                VersionedCache::bump('memories.logs', $memory->user_id);
             });
     }
 }

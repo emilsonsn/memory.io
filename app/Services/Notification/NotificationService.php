@@ -3,14 +3,11 @@
 namespace App\Services\Notification;
 
 use App\Models\Notification;
-use App\Support\VersionedCache;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Collection;
 
 class NotificationService
 {
-    private const LIST_CACHE_TTL_SECONDS = 60;
-
     private Notification $notification;
 
     public function setNotification(Notification $notification): self
@@ -27,18 +24,9 @@ class NotificationService
 
     public function getAll(int $perPage = 15): LengthAwarePaginator
     {
-        return VersionedCache::remember(
-            namespace: 'notifications.list',
-            params: [
-                'per_page' => $perPage,
-                'page' => request()->integer('page', 1),
-            ],
-            ttlSeconds: self::LIST_CACHE_TTL_SECONDS,
-            callback: static fn () => Notification::query()
-                ->latest()
-                ->paginate($perPage),
-            scope: auth()->id(),
-        );
+        return Notification::query()
+            ->latest()
+            ->paginate($perPage);
     }
 
     /**

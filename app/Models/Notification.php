@@ -3,7 +3,6 @@
 namespace App\Models;
 
 use App\Enums\NotificationType;
-use App\Support\VersionedCache;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
@@ -32,18 +31,6 @@ class Notification extends Model
 
         static::creating(function (Notification $notification): void {
             $notification->user_id ??= auth()->id();
-        });
-
-        static::created(function (Notification $notification): void {
-            VersionedCache::bump('notifications.list', $notification->user_id);
-        });
-
-        static::updated(function (Notification $notification): void {
-            VersionedCache::bump('notifications.list', $notification->user_id);
-        });
-
-        static::deleted(function (Notification $notification): void {
-            VersionedCache::bump('notifications.list', $notification->user_id);
         });
     }
 
