@@ -15,6 +15,8 @@ class NotificationController extends Controller
 
     public function index(Request $request): JsonResponse
     {
+        $this->authorize('viewAny', Notification::class);
+
         $perPage = max(1, min((int) $request->integer('per_page', 15), 100));
 
         $notifications = $this->notificationService->getAll($perPage);
@@ -34,6 +36,8 @@ class NotificationController extends Controller
 
     public function read(Notification $notification): JsonResponse
     {
+        $this->authorize('read', $notification);
+
         $notification = $this->notificationService->read($notification);
 
         return response()->json([
@@ -45,6 +49,8 @@ class NotificationController extends Controller
 
     public function readMany(ReadManyNotificationsRequest $request): JsonResponse
     {
+        $this->authorize('readMany', Notification::class);
+
         $notifications = $this->notificationService->readMany($request->validated('ids'));
 
         return response()->json([

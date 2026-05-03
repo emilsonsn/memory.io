@@ -19,6 +19,8 @@ class MemoryController extends Controller
 
     public function index(IndexMemoryRequest $request): JsonResponse
     {
+        $this->authorize('viewAny', Memory::class);
+
         $filters = $request->validated();
         $perPage = $filters['per_page'] ?? 15;
         unset($filters['per_page']);
@@ -40,6 +42,8 @@ class MemoryController extends Controller
 
     public function show(Memory $memory): JsonResponse
     {
+        $this->authorize('view', $memory);
+
         $memory = $this->memoryService
             ->setMemory($memory)
             ->object();
@@ -53,6 +57,8 @@ class MemoryController extends Controller
 
     public function logs(Request $request, Memory $memory): JsonResponse
     {
+        $this->authorize('logs', $memory);
+
         $perPage = max(1, min((int) $request->integer('per_page', 15), 100));
 
         $logs = $this->memoryService->getLogs($memory, $perPage);
@@ -72,6 +78,8 @@ class MemoryController extends Controller
 
     public function export(Memory $memory): StreamedResponse
     {
+        $this->authorize('export', $memory);
+
         $export = $this->memoryService->exportAsText($memory);
 
         return response()->streamDownload(
@@ -87,6 +95,8 @@ class MemoryController extends Controller
 
     public function store(StoreMemoryRequest $request): JsonResponse
     {
+        $this->authorize('create', Memory::class);
+
         $memory = $this->memoryService
             ->create($request->validated());
 
@@ -99,6 +109,8 @@ class MemoryController extends Controller
 
     public function update(UpdateMemoryRequest $request, Memory $memory): JsonResponse
     {
+        $this->authorize('update', $memory);
+
         $updatedMemory = $this->memoryService
             ->setMemory($memory)
             ->update($request->validated());
@@ -112,6 +124,8 @@ class MemoryController extends Controller
 
     public function destroy(Memory $memory): JsonResponse
     {
+        $this->authorize('delete', $memory);
+
         $this->memoryService
             ->setMemory($memory)
             ->delete();

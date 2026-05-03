@@ -2,9 +2,16 @@
 
 namespace App\Providers;
 
+use App\Models\Category;
+use App\Models\Memory;
+use App\Models\Notification;
+use App\Policies\CategoryPolicy;
+use App\Policies\MemoryPolicy;
+use App\Policies\NotificationPolicy;
 use Dedoc\Scramble\Scramble;
 use Dedoc\Scramble\Support\Generator\OpenApi;
 use Dedoc\Scramble\Support\Generator\SecurityScheme;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -22,6 +29,10 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        Gate::policy(Memory::class, MemoryPolicy::class);
+        Gate::policy(Category::class, CategoryPolicy::class);
+        Gate::policy(Notification::class, NotificationPolicy::class);
+
         Scramble::configure()
             ->withDocumentTransformers(function (OpenApi $openApi): void {
                 $openApi->secure(

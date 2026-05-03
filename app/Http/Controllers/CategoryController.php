@@ -16,6 +16,8 @@ class CategoryController extends Controller
 
     public function index(Request $request): JsonResponse
     {
+        $this->authorize('viewAny', Category::class);
+
         $perPage = max(1, min((int) $request->integer('per_page', 15), 100));
         $categories = $this->categoryService->getAll($perPage);
 
@@ -34,6 +36,8 @@ class CategoryController extends Controller
 
     public function show(Category $category): JsonResponse
     {
+        $this->authorize('view', $category);
+
         $category = $this->categoryService
             ->setCategory($category)
             ->object();
@@ -47,6 +51,8 @@ class CategoryController extends Controller
 
     public function store(StoreCategoryRequest $request): JsonResponse
     {
+        $this->authorize('create', Category::class);
+
         $category = $this->categoryService
             ->create($request->validated());
 
@@ -59,6 +65,8 @@ class CategoryController extends Controller
 
     public function update(UpdateCategoryRequest $request, Category $category): JsonResponse
     {
+        $this->authorize('update', $category);
+
         $updatedCategory = $this->categoryService
             ->setCategory($category)
             ->update($request->validated());
@@ -72,6 +80,8 @@ class CategoryController extends Controller
 
     public function destroy(Category $category): JsonResponse
     {
+        $this->authorize('delete', $category);
+
         $this->categoryService
             ->setCategory($category)
             ->delete();

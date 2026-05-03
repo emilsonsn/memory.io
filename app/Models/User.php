@@ -50,6 +50,11 @@ class User extends Authenticatable implements JWTSubject
         return $this->belongsTo(Plan::class);
     }
 
+    public function isAdmin(): bool
+    {
+        return $this->hasRole('admin');
+    }
+
     public function getJWTIdentifier(): mixed
     {
         return $this->getKey();
