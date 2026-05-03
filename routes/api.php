@@ -3,6 +3,7 @@
 use App\Enums\UserRole;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CategoryController;
+use App\Http\Controllers\ChatController;
 use App\Http\Controllers\ColorController;
 use App\Http\Controllers\MemoryController;
 use App\Http\Controllers\NotificationController;
@@ -24,6 +25,12 @@ Route::prefix('auth')->name('auth.')->group(function (): void {
 });
 
 Route::middleware('auth:api')->group(function (): void {
+
+    Route::prefix('chat')->name('chat.')->group(function (): void {
+        Route::post('messages', [ChatController::class, 'ask'])->name('messages.ask');
+        Route::get('sessions', [ChatController::class, 'sessions'])->name('sessions.index');
+        Route::get('sessions/{chatSession}/messages', [ChatController::class, 'messages'])->name('sessions.messages');
+    });
 
     Route::prefix('notifications')->name('notifications.')->group(function (): void {
         Route::get('/', [NotificationController::class, 'index'])->name('index');
