@@ -24,4 +24,8 @@ Route::middleware('auth:api')->group(function (): void {
     Route::apiResource('users', UserController::class)->except('store')->middleware('role:admin');
     Route::apiResource('categories', CategoryController::class);
     Route::apiResource('memories', MemoryController::class);
+    
+    Route::prefix('memories')->group(function (): void {
+        Route:: get('/{memory}/logs', [MemoryController::class, 'logs'])->name('memories.logs');
+    });
 });

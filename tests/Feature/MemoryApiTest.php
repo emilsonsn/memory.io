@@ -122,6 +122,59 @@ class MemoryApiTest extends TestCase
             ]);
     }
 
+    public function test_user_can_list_logs_for_a_specific_memory(): void
+    {
+        $plan = Plan::factory()->create([
+            'max_memories' => 100,
+        ]);
+        $user = User::factory()->for($plan)->create();
+
+        $this->actingAs($user, 'api')
+            ->postJson('/api/memories', [
+                'title' => 'Target memory',
+                'content' => 'First content',
+                'due_date' => now()->addDay()->toISOString(),
+            ])
+            ->assertCreated();
+
+        $targetMemory = Memory::query()->where('title', 'Target memory')->firstOrFail();
+
+        $this->actingAs($user, 'api')
+            ->patchJson("/api/memories/{$targetMemory->id}", [
+                'title' => 'Target memory updated',
+            ])
+            ->assertOk();
+
+        $this->actingAs($user, 'api')
+            ->postJson('/api/memories', [
+                'title' => 'Other memory',
+                'content' => 'Other content',
+                'due_date' => now()->addDay()->toISOString(),
+            ])
+            ->assertCreated();
+
+        $otherMemory = Memory::query()->where('title', 'Other memory')->firstOrFail();
+
+        $this->actingAs($user, 'api')
+            ->getJson("/api/memories/{$targetMemory->id}/logs?per_page=10")
+            ->assertOk()
+            ->assertJsonPath('success', true)
+            ->assertJsonPath('meta.total', 2)
+            ->assertJsonFragment([
+                'event' => 'memory.created',
+                'subject_id' => $targetMemory->id,
+                'causer_id' => $user->id,
+            ])
+            ->assertJsonFragment([
+                'event' => 'memory.updated',
+                'subject_id' => $targetMemory->id,
+                'causer_id' => $user->id,
+            ])
+            ->assertJsonMissing([
+                'subject_id' => $otherMemory->id,
+            ]);
+    }
+
     public function test_user_can_create_memory_with_categories(): void
     {
         $plan = Plan::factory()->create([

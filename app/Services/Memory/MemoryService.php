@@ -8,6 +8,7 @@ use App\Services\Concerns\AuditsActivities;
 use App\Services\Plan\PlanLimitService;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use RuntimeException;
+use Spatie\Activitylog\Models\Activity;
 
 class MemoryService
 {
@@ -145,6 +146,15 @@ class MemoryService
         ]);
 
         return $this;
+    }
+
+    public function getLogs(Memory $memory, int $perPage = 15): LengthAwarePaginator
+    {
+        return Activity::query()
+            ->where('subject_type', Memory::class)
+            ->where('subject_id', $memory->id)
+            ->latest()
+            ->paginate($perPage);
     }
 
     /**

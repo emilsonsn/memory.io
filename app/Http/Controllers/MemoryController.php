@@ -3,12 +3,14 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\Memory\IndexMemoryRequest;
+use App\Http\Resources\ActivityResource;
 use App\Http\Requests\Memory\StoreMemoryRequest;
 use App\Http\Requests\Memory\UpdateMemoryRequest;
 use App\Http\Resources\MemoryResource;
 use App\Models\Memory;
 use App\Services\Memory\MemoryService;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 
 class MemoryController extends Controller
 {
@@ -45,6 +47,25 @@ class MemoryController extends Controller
             'success' => true,
             'message' => 'Memory retrieved successfully.',
             'data' => MemoryResource::make($memory),
+        ]);
+    }
+
+    public function logs(Request $request, Memory $memory): JsonResponse
+    {
+        $perPage = max(1, min((int) $request->integer('per_page', 15), 100));
+
+        $logs = $this->memoryService->getLogs($memory, $perPage);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Memory logs retrieved successfully.',
+            'data' => ActivityResource::collection($logs),
+            'meta' => [
+                'current_page' => $logs->currentPage(),
+                'last_page' => $logs->lastPage(),
+                'per_page' => $logs->perPage(),
+                'total' => $logs->total(),
+            ],
         ]);
     }
 
