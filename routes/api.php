@@ -21,7 +21,11 @@ Route::prefix('auth')->name('auth.')->group(function (): void {
 });
 
 Route::middleware('auth:api')->group(function (): void {
-    Route::get('notifications', [NotificationController::class, 'index'])->name('notifications.index');
+    
+    Route::prefix('notifications')->name('notifications.')->group(function (): void {
+        Route::get('/', [NotificationController::class, 'index'])->name('index');
+        Route::patch('{notification}/read', [NotificationController::class, 'read'])->name('read');
+    });
 
     Route::prefix('memories')->name('memories.')->group(function (): void {
         Route::get('{memory}/logs', [MemoryController::class, 'logs'])->name('logs');

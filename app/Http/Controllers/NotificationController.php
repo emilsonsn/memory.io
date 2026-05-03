@@ -4,30 +4,19 @@ namespace App\Http\Controllers;
 
 use App\Http\Resources\NotificationResource;
 use App\Models\Notification;
-use App\Support\VersionedCache;
+use App\Services\Notification\NotificationService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class NotificationController extends Controller
 {
-    private const LIST_CACHE_TTL_SECONDS = 60;
+    public function __construct(private readonly NotificationService $notificationService) {}
 
     public function index(Request $request): JsonResponse
     {
         $perPage = max(1, min((int) $request->integer('per_page', 15), 100));
 
-        $notifications = VersionedCache::remember(
-            namespace: 'notifications.list',
-            params: [
-                'per_page' => $perPage,
-                'page' => $request->integer('page', 1),
-            ],
-            ttlSeconds: self::LIST_CACHE_TTL_SECONDS,
-            callback: static fn () => Notification::query()
-                ->latest()
-                ->paginate($perPage),
-            scope: auth()->id(),
-        );
+        $notifications = $this->notificationService->getAll($perPage);
 
         return response()->json([
             'success' => true,
@@ -39,6 +28,17 @@ class NotificationController extends Controller
                 'per_page' => $notifications->perPage(),
                 'total' => $notifications->total(),
             ],
+        ]);
+    }
+
+    public function read(Notification $notification): JsonResponse
+    {
+        $notification = $this->notificationService->read($notification);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Notification marked as seen successfully.',
+            'data' => NotificationResource::make($notification),
         ]);
     }
 }

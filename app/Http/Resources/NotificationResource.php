@@ -17,6 +17,7 @@ class NotificationResource extends JsonResource
             'title' => $this->title,
             'url' => $this->url,
             'type' => $this->type,
+            'seen' => (bool) $this->seen,
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
         ];

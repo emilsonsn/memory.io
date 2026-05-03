@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-#[Fillable(['title', 'url', 'type'])]
+#[Fillable(['title', 'url', 'type', 'seen'])]
 class Notification extends Model
 {
     use HasUuids, HasFactory;
@@ -54,6 +54,7 @@ class Notification extends Model
     {
         return [
             'type' => 'string',
+            'seen' => 'boolean',
         ];
     }    
 
