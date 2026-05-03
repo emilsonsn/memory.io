@@ -4,8 +4,8 @@ namespace App\Services\Notification;
 
 use App\Models\Notification;
 use App\Support\VersionedCache;
-use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Database\Eloquent\Collection;
 
 class NotificationService
 {

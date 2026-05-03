@@ -3,9 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\Memory\IndexMemoryRequest;
-use App\Http\Resources\ActivityResource;
 use App\Http\Requests\Memory\StoreMemoryRequest;
 use App\Http\Requests\Memory\UpdateMemoryRequest;
+use App\Http\Resources\ActivityResource;
 use App\Http\Resources\MemoryResource;
 use App\Models\Memory;
 use App\Services\Memory\MemoryService;

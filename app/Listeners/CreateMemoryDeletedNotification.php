@@ -26,7 +26,7 @@ class CreateMemoryDeletedNotification
             return;
         }
 
-        $notification = new Notification();
+        $notification = new Notification;
         $notification->user_id = $event->userId;
         $notification->title = $title;
         $notification->url = '/memories';

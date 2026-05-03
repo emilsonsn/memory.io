@@ -41,5 +41,4 @@ class MemoryPolicy
     {
         return $this->view($user, $memory);
     }
-
 }

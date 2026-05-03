@@ -4,10 +4,10 @@ namespace Tests\Feature;
 
 use App\Enums\MemoryAuditEvent;
 use App\Enums\MemoryDeletionReason;
-use App\Jobs\DeleteExpiredMemoriesJob;
-use App\Jobs\NotifyMemoriesPendingDeletionJob;
 use App\Enums\NotificationType;
 use App\Enums\SystemActor;
+use App\Jobs\DeleteExpiredMemoriesJob;
+use App\Jobs\NotifyMemoriesPendingDeletionJob;
 use App\Models\Memory;
 use App\Models\Notification;
 use App\Models\User;
@@ -36,7 +36,7 @@ class DeleteExpiredMemoriesJobTest extends TestCase
             'due_date' => now()->addDay(),
         ]);
 
-        (new DeleteExpiredMemoriesJob())->handle();
+        (new DeleteExpiredMemoriesJob)->handle();
 
         $this->assertSoftDeleted('memories', [
             'id' => $expiredMemory->id,
@@ -99,7 +99,7 @@ class DeleteExpiredMemoriesJobTest extends TestCase
             'due_date' => now()->addDays(2),
         ]);
 
-        (new NotifyMemoriesPendingDeletionJob())->handle();
+        (new NotifyMemoriesPendingDeletionJob)->handle();
 
         $this->assertDatabaseHas('notifications', [
             'user_id' => $user->id,

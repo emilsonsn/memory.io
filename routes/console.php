@@ -10,10 +10,10 @@ Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
 })->purpose('Display an inspiring quote');
 
-Schedule::job(new NotifyMemoriesPendingDeletionJob())
+Schedule::job(new NotifyMemoriesPendingDeletionJob)
     ->dailyAt('00:05')
     ->withoutOverlapping();
 
-Schedule::job(new DeleteExpiredMemoriesJob())
+Schedule::job(new DeleteExpiredMemoriesJob)
     ->dailyAt('00:10')
     ->withoutOverlapping();

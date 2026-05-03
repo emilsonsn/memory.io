@@ -22,7 +22,7 @@ Route::prefix('auth')->name('auth.')->group(function (): void {
 });
 
 Route::middleware('auth:api')->group(function (): void {
-    
+
     Route::prefix('notifications')->name('notifications.')->group(function (): void {
         Route::get('/', [NotificationController::class, 'index'])->name('index');
         Route::patch('read', [NotificationController::class, 'readMany'])->name('read-many');
@@ -36,6 +36,6 @@ Route::middleware('auth:api')->group(function (): void {
 
     Route::apiResource('plans', PlanController::class)->middleware('role:'.UserRole::ADMIN->value);
     Route::apiResource('users', UserController::class)->except('store')->middleware('role:'.UserRole::ADMIN->value);
-    Route::apiResource('categories', CategoryController::class);    
+    Route::apiResource('categories', CategoryController::class);
     Route::apiResource('memories', MemoryController::class);
 });

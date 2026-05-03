@@ -135,5 +135,4 @@ class CategoryService
             'parent_id' => $category->parent_id,
         ];
     }
-
 }

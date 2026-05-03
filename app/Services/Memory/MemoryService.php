@@ -256,5 +256,4 @@ class MemoryService
         VersionedCache::bump('memories.list', $memory->user_id);
         VersionedCache::bump('memories.logs', $memory->user_id);
     }
-
 }
