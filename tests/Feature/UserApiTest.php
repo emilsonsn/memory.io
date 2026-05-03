@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\Plan;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
@@ -102,6 +103,32 @@ class UserApiTest extends TestCase
 
         $this->assertDatabaseMissing('users', [
             'id' => $targetUser->id,
+        ]);
+    }
+
+    public function test_user_plan_cannot_be_updated_through_user_endpoint(): void
+    {
+        $user = User::factory()->create();
+        $currentPlan = Plan::factory()->create();
+        $newPlan = Plan::factory()->create();
+        $targetUser = User::factory()->create([
+            'plan_id' => $currentPlan->id,
+        ]);
+
+        $this->actingAs($user)
+            ->patchJson("/api/users/{$targetUser->id}", [
+                'name' => 'Still allowed',
+                'plan_id' => $newPlan->id,
+            ])
+            ->assertOk()
+            ->assertJsonFragment([
+                'name' => 'Still allowed',
+                'plan_id' => $currentPlan->id,
+            ]);
+
+        $this->assertDatabaseHas('users', [
+            'id' => $targetUser->id,
+            'plan_id' => $currentPlan->id,
         ]);
     }
 }
