@@ -11,6 +11,7 @@ use App\Models\Memory;
 use App\Services\Memory\MemoryService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class MemoryController extends Controller
 {
@@ -67,6 +68,21 @@ class MemoryController extends Controller
                 'total' => $logs->total(),
             ],
         ]);
+    }
+
+    public function export(Memory $memory): StreamedResponse
+    {
+        $export = $this->memoryService->exportAsText($memory);
+
+        return response()->streamDownload(
+            static function () use ($export): void {
+                echo $export['content'];
+            },
+            $export['filename'],
+            [
+                'Content-Type' => 'text/plain; charset=UTF-8',
+            ],
+        );
     }
 
     public function store(StoreMemoryRequest $request): JsonResponse

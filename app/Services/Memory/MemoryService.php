@@ -7,6 +7,7 @@ use App\Models\Memory;
 use App\Services\Concerns\AuditsActivities;
 use App\Services\Plan\PlanLimitService;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Str;
 use RuntimeException;
 use Spatie\Activitylog\Models\Activity;
 
@@ -155,6 +156,29 @@ class MemoryService
             ->where('subject_id', $memory->id)
             ->latest()
             ->paginate($perPage);
+    }
+
+    /**
+     * @return array{filename: string, content: string}
+     */
+    public function exportAsText(Memory $memory): array
+    {
+        $title = trim((string) $memory->title);
+        $safeTitle = Str::of($title)
+            ->replaceMatches('/[\\\\\/:*?"<>|\x00-\x1F]+/', '-')
+            ->trim()
+            ->toString();
+
+        if ($safeTitle === '') {
+            $safeTitle = 'memory-'.$memory->id;
+        }
+
+        $content = $title."\n".$memory->content;
+
+        return [
+            'filename' => $safeTitle.'.txt',
+            'content' => $content,
+        ];
     }
 
     /**

@@ -23,9 +23,11 @@ Route::middleware('auth:api')->group(function (): void {
     Route::apiResource('plans', PlanController::class)->middleware('role:admin');
     Route::apiResource('users', UserController::class)->except('store')->middleware('role:admin');
     Route::apiResource('categories', CategoryController::class);
-    Route::apiResource('memories', MemoryController::class);
-    
-    Route::prefix('memories')->group(function (): void {
-        Route:: get('/{memory}/logs', [MemoryController::class, 'logs'])->name('memories.logs');
+
+    Route::prefix('memories')->name('memories.')->group(function (): void {
+        Route::get('{memory}/logs', [MemoryController::class, 'logs'])->name('logs');
+        Route::get('{memory}/export', [MemoryController::class, 'export'])->name('export');
     });
+
+    Route::apiResource('memories', MemoryController::class);
 });

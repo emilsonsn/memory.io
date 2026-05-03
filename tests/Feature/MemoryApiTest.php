@@ -175,6 +175,31 @@ class MemoryApiTest extends TestCase
             ]);
     }
 
+    public function test_user_can_export_memory_as_txt_file(): void
+    {
+        $plan = Plan::factory()->create([
+            'max_memories' => 100,
+        ]);
+        $user = User::factory()->for($plan)->create();
+
+        $memory = Memory::factory()->for($user)->create([
+            'title' => 'Shopping list',
+            'content' => "Coffee\nMilk\nBread",
+        ]);
+
+        $response = $this->actingAs($user, 'api')
+            ->get("/api/memories/{$memory->id}/export");
+
+        $response
+            ->assertOk()
+            ->assertHeader('content-type', 'text/plain; charset=UTF-8')
+            ->assertHeader('content-disposition', 'attachment; filename="Shopping list.txt"');
+
+        $response
+            ->assertStreamed()
+            ->assertStreamedContent("Shopping list\nCoffee\nMilk\nBread");
+    }
+
     public function test_user_can_create_memory_with_categories(): void
     {
         $plan = Plan::factory()->create([
