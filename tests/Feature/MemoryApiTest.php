@@ -128,6 +128,32 @@ class MemoryApiTest extends TestCase
             ]);
     }
 
+    public function test_user_can_filter_memories_by_text_ignoring_case(): void
+    {
+        $user = User::factory()->create();
+
+        $matchingMemory = Memory::factory()->for($user)->create([
+            'title' => 'Important Mixed CASE Note',
+            'content' => 'Plain content.',
+        ]);
+
+        Memory::factory()->for($user)->create([
+            'title' => 'Another note',
+            'content' => 'No matching text.',
+        ]);
+
+        $this->actingAs($user, 'api')
+            ->getJson('/api/memories?text=mixed case')
+            ->assertOk()
+            ->assertJsonFragment([
+                'id' => $matchingMemory->id,
+                'title' => 'Important Mixed CASE Note',
+            ])
+            ->assertJsonMissing([
+                'title' => 'Another note',
+            ]);
+    }
+
     public function test_user_can_filter_memories_without_categories(): void
     {
         $user = User::factory()->create();
@@ -177,6 +203,69 @@ class MemoryApiTest extends TestCase
             ->getJson("/api/memories?{$query}")
             ->assertUnprocessable()
             ->assertJsonValidationErrors('without_categories');
+    }
+
+    public function test_user_can_list_only_their_trashed_memories(): void
+    {
+        $user = User::factory()->create();
+        $otherUser = User::factory()->create();
+
+        $trashedMemory = Memory::factory()->for($user)->create([
+            'title' => 'Deleted memory',
+        ]);
+        $trashedMemory->delete();
+
+        Memory::factory()->for($user)->create([
+            'title' => 'Active memory',
+        ]);
+
+        $otherUsersTrashedMemory = Memory::factory()->for($otherUser)->create([
+            'title' => 'Other deleted memory',
+        ]);
+        $otherUsersTrashedMemory->delete();
+
+        $this->actingAs($user, 'api')
+            ->getJson('/api/memories/trashed')
+            ->assertOk()
+            ->assertJsonPath('success', true)
+            ->assertJsonFragment([
+                'id' => $trashedMemory->id,
+                'title' => 'Deleted memory',
+            ])
+            ->assertJsonMissing([
+                'title' => 'Active memory',
+            ])
+            ->assertJsonMissing([
+                'title' => 'Other deleted memory',
+            ]);
+    }
+
+    public function test_user_can_filter_trashed_memories_without_categories(): void
+    {
+        $user = User::factory()->create();
+        $category = Category::factory()->for($user)->create();
+
+        $uncategorizedTrashedMemory = Memory::factory()->for($user)->create([
+            'title' => 'Deleted loose note',
+        ]);
+        $uncategorizedTrashedMemory->delete();
+
+        $categorizedTrashedMemory = Memory::factory()->for($user)->create([
+            'title' => 'Deleted categorized note',
+        ]);
+        $categorizedTrashedMemory->categories()->sync([$category->id]);
+        $categorizedTrashedMemory->delete();
+
+        $this->actingAs($user, 'api')
+            ->getJson('/api/memories/trashed?without_categories=true')
+            ->assertOk()
+            ->assertJsonFragment([
+                'id' => $uncategorizedTrashedMemory->id,
+                'title' => 'Deleted loose note',
+            ])
+            ->assertJsonMissing([
+                'id' => $categorizedTrashedMemory->id,
+            ]);
     }
 
     public function test_user_can_sort_memories(): void

@@ -62,6 +62,22 @@ class MemoryService
      */
     public function getAll(int $perPage = 15, array $filters = []): LengthAwarePaginator
     {
+        return $this->paginateMemories($perPage, $filters);
+    }
+
+    /**
+     * @param  array<string, mixed>  $filters
+     */
+    public function getTrashed(int $perPage = 15, array $filters = []): LengthAwarePaginator
+    {
+        return $this->paginateMemories($perPage, $filters, true);
+    }
+
+    /**
+     * @param  array<string, mixed>  $filters
+     */
+    private function paginateMemories(int $perPage = 15, array $filters = [], bool $onlyTrashed = false): LengthAwarePaginator
+    {
         $categoryIds = $filters['category_ids'] ?? [];
         $withoutCategories = (bool) ($filters['without_categories'] ?? false);
         $sortBy = $this->resolveSortBy($filters);
@@ -70,13 +86,18 @@ class MemoryService
         $query = Memory::query()
             ->with('categories');
 
-        $query->when(! empty($filters['text']), function ($query) use ($filters) {
-            $searchText = trim((string) $filters['text']);
+        if ($onlyTrashed) {
+            $query->onlyTrashed();
+        }
 
-            $query->where(function ($innerQuery) use ($searchText): void {
+        $query->when(! empty($filters['text']), function ($query) use ($filters) {
+            $searchText = Str::lower(trim((string) $filters['text']));
+            $searchPattern = "%{$searchText}%";
+
+            $query->where(function ($innerQuery) use ($searchPattern): void {
                 $innerQuery
-                    ->where('title', 'like', "%{$searchText}%")
-                    ->orWhere('content', 'like', "%{$searchText}%");
+                    ->whereRaw('LOWER(title) LIKE ?', [$searchPattern])
+                    ->orWhereRaw('LOWER(content) LIKE ?', [$searchPattern]);
             });
         })->when(! empty($filters['created_from']), function ($query) use ($filters) {
             $query->whereDate('created_at', '>=', (string) $filters['created_from']);

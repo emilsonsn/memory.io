@@ -40,6 +40,29 @@ class MemoryController extends Controller
         ]);
     }
 
+    public function trashed(IndexMemoryRequest $request): JsonResponse
+    {
+        $this->authorize('viewAny', Memory::class);
+
+        $filters = $request->validated();
+        $perPage = $filters['per_page'] ?? 15;
+        unset($filters['per_page']);
+
+        $memories = $this->memoryService->getTrashed($perPage, $filters);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Trashed memories retrieved successfully.',
+            'data' => MemoryResource::collection($memories),
+            'meta' => [
+                'current_page' => $memories->currentPage(),
+                'last_page' => $memories->lastPage(),
+                'per_page' => $memories->perPage(),
+                'total' => $memories->total(),
+            ],
+        ]);
+    }
+
     public function show(Memory $memory): JsonResponse
     {
         $this->authorize('view', $memory);

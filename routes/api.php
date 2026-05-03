@@ -43,6 +43,7 @@ Route::middleware('auth:api')->group(function (): void {
     });
 
     Route::prefix('memories')->name('memories.')->group(function (): void {
+        Route::get('trashed', [MemoryController::class, 'trashed'])->name('trashed');
         Route::get('{memory}/logs', [MemoryController::class, 'logs'])->name('logs');
         Route::get('{memory}/export', [MemoryController::class, 'export'])->name('export');
     });
