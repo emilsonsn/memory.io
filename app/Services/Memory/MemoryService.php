@@ -4,12 +4,15 @@ namespace App\Services\Memory;
 
 use App\Models\Category;
 use App\Models\Memory;
+use App\Services\Concerns\AuditsActivities;
 use App\Services\Plan\PlanLimitService;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use RuntimeException;
 
 class MemoryService
 {
+    use AuditsActivities;
+
     private Memory $memory;
 
     public function __construct(private readonly PlanLimitService $planLimitService) {}
@@ -88,12 +91,22 @@ class MemoryService
         $this->memory = Memory::create($data);
         $this->syncCategories($categoryIds);
 
-        return $this->object();
+        $memory = $this->object();
+
+        $this->audit('memory.created', $memory, [
+            'old' => null,
+            'new' => $this->memoryAuditSnapshot($memory),
+            'changed_fields' => ['title', 'content', 'due_date', 'category_ids'],
+        ]);
+
+        return $memory;
     }
 
     public function update(array $data): Memory
     {
         $this->verifyMemoryIsSet();
+
+        $before = $this->memoryAuditSnapshot($this->memory);
 
         $categoryIds = $data['category_ids'] ?? null;
         unset($data['category_ids']);
@@ -104,13 +117,32 @@ class MemoryService
             $this->syncCategories($categoryIds);
         }
 
-        return $this->object();
+        $memory = $this->object();
+        $after = $this->memoryAuditSnapshot($memory);
+
+        $this->audit('memory.updated', $memory, [
+            'old' => $before,
+            'new' => $after,
+            'changed_fields' => $this->resolveChangedFields($before, $after),
+        ]);
+
+        return $memory;
     }
 
     public function delete(): self
     {
         $this->verifyMemoryIsSet();
+
+        $before = $this->memoryAuditSnapshot($this->memory);
+        $memory = $this->memory;
+
         $this->memory->delete();
+
+        $this->audit('memory.deleted', $memory, [
+            'old' => $before,
+            'new' => null,
+            'changed_fields' => array_keys($before),
+        ]);
 
         return $this;
     }
@@ -127,4 +159,23 @@ class MemoryService
 
         $this->memory->categories()->sync($ownedCategoryIds);
     }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function memoryAuditSnapshot(Memory $memory): array
+    {
+        $dueDate = $memory->due_date;
+
+        return [
+            'title' => $memory->title,
+            'content' => $memory->content,
+            'due_date' => $dueDate?->toISOString(),
+            'category_ids' => $memory->categories()
+                ->pluck('categories.id')
+                ->values()
+                ->all(),
+        ];
+    }
+
 }

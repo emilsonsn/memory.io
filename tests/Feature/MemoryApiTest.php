@@ -8,6 +8,7 @@ use App\Models\Plan;
 use App\Models\User;
 use Database\Seeders\RolesAndPermissionsSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Spatie\Activitylog\Models\Activity;
 use Tests\TestCase;
 
 class MemoryApiTest extends TestCase
@@ -156,6 +157,24 @@ class MemoryApiTest extends TestCase
             'memory_id' => $memory->id,
             'category_id' => $category->id,
         ]);
+
+        $this->assertDatabaseHas('activity_log', [
+            'log_name' => 'audit',
+            'event' => 'memory.created',
+            'description' => 'memory.created',
+            'subject_type' => Memory::class,
+            'subject_id' => $memory->id,
+            'causer_type' => User::class,
+            'causer_id' => $user->id,
+        ]);
+
+        $activity = Activity::query()
+            ->where('event', 'memory.created')
+            ->where('subject_id', $memory->id)
+            ->firstOrFail();
+
+        $this->assertSame('Buy coffee', data_get($activity->properties->toArray(), 'new.title'));
+        $this->assertSame($category->id, data_get($activity->properties->toArray(), 'new.category_ids.0'));
     }
 
     public function test_user_cannot_attach_another_users_category_to_memory(): void
@@ -197,10 +216,46 @@ class MemoryApiTest extends TestCase
                 'title' => 'New title',
             ]);
 
+        $this->assertDatabaseHas('activity_log', [
+            'log_name' => 'audit',
+            'event' => 'memory.updated',
+            'description' => 'memory.updated',
+            'subject_type' => Memory::class,
+            'subject_id' => $memory->id,
+            'causer_type' => User::class,
+            'causer_id' => $user->id,
+        ]);
+
+        $updateActivity = Activity::query()
+            ->where('event', 'memory.updated')
+            ->where('subject_id', $memory->id)
+            ->firstOrFail();
+
+        $this->assertSame('Old title', data_get($updateActivity->properties->toArray(), 'old.title'));
+        $this->assertSame('New title', data_get($updateActivity->properties->toArray(), 'new.title'));
+
         $this->actingAs($user, 'api')
             ->deleteJson("/api/memories/{$memory->id}")
             ->assertOk()
             ->assertJsonPath('success', true);
+
+        $this->assertDatabaseHas('activity_log', [
+            'log_name' => 'audit',
+            'event' => 'memory.deleted',
+            'description' => 'memory.deleted',
+            'subject_type' => Memory::class,
+            'subject_id' => $memory->id,
+            'causer_type' => User::class,
+            'causer_id' => $user->id,
+        ]);
+
+        $deleteActivity = Activity::query()
+            ->where('event', 'memory.deleted')
+            ->where('subject_id', $memory->id)
+            ->firstOrFail();
+
+        $this->assertSame('New title', data_get($deleteActivity->properties->toArray(), 'old.title'));
+        $this->assertNull(data_get($deleteActivity->properties->toArray(), 'new'));
 
         $this->assertSoftDeleted('memories', [
             'id' => $memory->id,
