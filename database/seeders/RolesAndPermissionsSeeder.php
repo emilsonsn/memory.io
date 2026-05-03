@@ -16,23 +16,26 @@ class RolesAndPermissionsSeeder extends Seeder
     {
         app(PermissionRegistrar::class)->forgetCachedPermissions();
 
-        $permissions = [
+        $guard = 'web';
+
+        $permissionNames = [
             'plans.manage',
             'users.manage',
             'categories.manage',
             'memories.manage',
         ];
 
-        foreach ($permissions as $permission) {
-            Permission::findOrCreate($permission);
-        }
+        $permissions = collect($permissionNames)
+            ->map(fn (string $permission) => Permission::findOrCreate($permission, $guard));
 
-        Role::findOrCreate('admin')->syncPermissions($permissions);
+        Role::findOrCreate('admin', $guard)->syncPermissions($permissions);
 
-        Role::findOrCreate('user')->syncPermissions([
-            'categories.manage',
-            'memories.manage',
-        ]);
+        Role::findOrCreate('user', $guard)->syncPermissions(
+            $permissions->whereIn('name', [
+                'categories.manage',
+                'memories.manage',
+            ]),
+        );
 
         app(PermissionRegistrar::class)->forgetCachedPermissions();
     }
