@@ -2,6 +2,7 @@
 
 namespace Tests\Unit;
 
+use App\Models\Plan;
 use App\Models\User;
 use App\Services\User\UserService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -14,6 +15,7 @@ class UserServiceTest extends TestCase
 
     public function test_it_creates_user_with_hashed_password(): void
     {
+
         $user = app(UserService::class)->create([
             'name' => 'Jane Doe',
             'email' => 'jane@example.com',
