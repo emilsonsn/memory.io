@@ -19,7 +19,11 @@ class UserService
 
     public function object(): User
     {
-        return $this->user->fresh();
+        return $this->user
+            ->fresh()
+            ->load([
+                'plan',
+            ]);
     }
 
     public function verifyUserIsSet(): void
@@ -32,6 +36,7 @@ class UserService
     public function getAll(int $perPage = 15): LengthAwarePaginator
     {
         return User::query()
+            ->with('plan')
             ->latest()
             ->paginate($perPage);
     }

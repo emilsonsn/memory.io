@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\Plan;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
@@ -13,23 +14,28 @@ class UserApiTest extends TestCase
 
     public function test_guest_can_create_user(): void
     {
+        $plan = Plan::factory()->create();
+
         $this->postJson('/api/users', [
             'name' => 'Emilson',
             'email' => 'emilson@example.com',
             'password' => 'password123',
             'password_confirmation' => 'password123',
+            'plan_id' => $plan->id,
         ])
             ->assertCreated()
             ->assertJsonPath('success', true)
             ->assertJsonFragment([
                 'name' => 'Emilson',
                 'email' => 'emilson@example.com',
+                'plan_id' => $plan->id,
             ])
             ->assertJsonMissingPath('data.password');
 
         $user = User::query()->where('email', 'emilson@example.com')->firstOrFail();
 
         $this->assertTrue(Hash::check('password123', $user->password));
+        $this->assertSame($plan->id, $user->plan_id);
     }
 
     public function test_user_creation_validates_unique_email(): void
