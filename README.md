@@ -1,12 +1,14 @@
 # Memory.io API
 
-Backend API para gerenciamento de memórias pessoais, categorias, planos e notificações, com autenticação JWT, políticas de autorização e auditoria de ações.
+Backend API de um gerenciador de notas de texto com filtros avancados, organizado como uma biblioteca pessoal de anotacoes. No dominio do sistema, cada nota e chamada de memoria.
 
 ## Visão Geral
 
 O projeto foi construído para oferecer:
 
-- CRUD de memórias com categorias e due date
+- Biblioteca pessoal de notas de texto (memorias)
+- CRUD completo de memorias com categorias e due date
+- Filtros avancados para busca e organizacao de memorias
 - Controle de recursos por plano
 - Notificações de domínio baseadas em eventos/listeners
 - Auditoria de operações críticas
@@ -35,7 +37,8 @@ O projeto foi construído para oferecer:
 - Categories
 	- categorias por usuário
 - Memories
-	- registros do usuário com conteúdo e due date
+	- notas de texto do usuario (chamadas de memorias)
+	- filtros avancados por texto, categorias e datas
 	- logs de auditoria e exportação em texto
 - Notifications
 	- listagem e marcação como lida
