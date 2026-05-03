@@ -46,6 +46,81 @@ class MemoryApiTest extends TestCase
             ]);
     }
 
+    public function test_user_can_filter_memories_by_text_dates_and_categories(): void
+    {
+        $user = User::factory()->create();
+        $otherUser = User::factory()->create();
+
+        $targetCategory = Category::factory()->for($user)->create();
+        $otherCategory = Category::factory()->for($user)->create();
+        $externalCategory = Category::factory()->for($otherUser)->create();
+
+        $matchingMemory = Memory::factory()->for($user)->create([
+            'title' => 'Project kickoff notes',
+            'content' => 'Discuss timeline and deliverables.',
+            'due_date' => '2026-05-20 10:00:00',
+            'created_at' => '2026-05-10 09:00:00',
+            'updated_at' => '2026-05-12 14:00:00',
+        ]);
+        $matchingMemory->categories()->sync([$targetCategory->id]);
+
+        $wrongDueDateMemory = Memory::factory()->for($user)->create([
+            'title' => 'Project kickoff draft',
+            'content' => 'This one has due date out of range.',
+            'due_date' => '2026-06-10 10:00:00',
+            'created_at' => '2026-05-10 09:00:00',
+            'updated_at' => '2026-05-12 14:00:00',
+        ]);
+        $wrongDueDateMemory->categories()->sync([$targetCategory->id]);
+
+        $wrongCategoryMemory = Memory::factory()->for($user)->create([
+            'title' => 'Project kickoff retrospective',
+            'content' => 'Same text, but wrong category.',
+            'due_date' => '2026-05-20 10:00:00',
+            'created_at' => '2026-05-10 09:00:00',
+            'updated_at' => '2026-05-12 14:00:00',
+        ]);
+        $wrongCategoryMemory->categories()->sync([$otherCategory->id]);
+
+        $otherUserMemory = Memory::factory()->for($otherUser)->create([
+            'title' => 'Project kickoff private',
+            'content' => 'Should not be visible for authenticated user.',
+            'due_date' => '2026-05-20 10:00:00',
+            'created_at' => '2026-05-10 09:00:00',
+            'updated_at' => '2026-05-12 14:00:00',
+        ]);
+        $otherUserMemory->categories()->sync([$externalCategory->id]);
+
+        $query = http_build_query([
+            'created_from' => '2026-05-01',
+            'created_to' => '2026-05-31',
+            'updated_from' => '2026-05-01',
+            'updated_to' => '2026-05-31',
+            'due_from' => '2026-05-01',
+            'due_to' => '2026-05-31',
+            'text' => 'kickoff',
+            'category_ids' => [$targetCategory->id],
+        ]);
+
+        $this->actingAs($user, 'api')
+            ->getJson("/api/memories?{$query}")
+            ->assertOk()
+            ->assertJsonPath('success', true)
+            ->assertJsonFragment([
+                'id' => $matchingMemory->id,
+                'title' => 'Project kickoff notes',
+            ])
+            ->assertJsonMissing([
+                'id' => $wrongDueDateMemory->id,
+            ])
+            ->assertJsonMissing([
+                'id' => $wrongCategoryMemory->id,
+            ])
+            ->assertJsonMissing([
+                'id' => $otherUserMemory->id,
+            ]);
+    }
+
     public function test_user_can_create_memory_with_categories(): void
     {
         $plan = Plan::factory()->create([

@@ -2,22 +2,25 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\Memory\IndexMemoryRequest;
 use App\Http\Requests\Memory\StoreMemoryRequest;
 use App\Http\Requests\Memory\UpdateMemoryRequest;
 use App\Http\Resources\MemoryResource;
 use App\Models\Memory;
 use App\Services\Memory\MemoryService;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 
 class MemoryController extends Controller
 {
     public function __construct(private readonly MemoryService $memoryService) {}
 
-    public function index(Request $request): JsonResponse
+    public function index(IndexMemoryRequest $request): JsonResponse
     {
-        $perPage = max(1, min((int) $request->integer('per_page', 15), 100));
-        $memories = $this->memoryService->getAll($perPage);
+        $filters = $request->validated();
+        $perPage = $filters['per_page'] ?? 15;
+        unset($filters['per_page']);
+
+        $memories = $this->memoryService->getAll($perPage, $filters);
 
         return response()->json([
             'success' => true,

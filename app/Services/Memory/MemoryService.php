@@ -37,10 +37,43 @@ class MemoryService
         }
     }
 
-    public function getAll(int $perPage = 15): LengthAwarePaginator
+    /**
+     * @param  array<string, mixed>  $filters
+     */
+    public function getAll(int $perPage = 15, array $filters = []): LengthAwarePaginator
     {
-        return Memory::query()
-            ->with('categories')
+        $categoryIds = $filters['category_ids'] ?? [];
+
+        $query = Memory::query()
+            ->with('categories');
+
+        $query->when(! empty($filters['text']), function ($query) use ($filters) {
+            $searchText = trim((string) $filters['text']);
+
+            $query->where(function ($innerQuery) use ($searchText): void {
+                $innerQuery
+                    ->where('title', 'like', "%{$searchText}%")
+                    ->orWhere('content', 'like', "%{$searchText}%");
+            });
+        })->when(! empty($filters['created_from']), function ($query) use ($filters) {
+            $query->whereDate('created_at', '>=', (string) $filters['created_from']);
+        })->when(! empty($filters['created_to']), function ($query) use ($filters) {
+            $query->whereDate('created_at', '<=', (string) $filters['created_to']);
+        })->when(! empty($filters['updated_from']), function ($query) use ($filters) {
+            $query->whereDate('updated_at', '>=', (string) $filters['updated_from']);
+        })->when(! empty($filters['updated_to']), function ($query) use ($filters) {
+            $query->whereDate('updated_at', '<=', (string) $filters['updated_to']);
+        })->when(! empty($filters['due_from']), function ($query) use ($filters) {
+            $query->whereDate('due_date', '>=', (string) $filters['due_from']);
+        })->when(! empty($filters['due_to']), function ($query) use ($filters) {
+            $query->whereDate('due_date', '<=', (string) $filters['due_to']);
+        })->when(is_array($categoryIds) && $categoryIds !== [], function ($query) use ($categoryIds) {
+            $query->whereHas('categories', function ($categoriesQuery) use ($categoryIds): void {
+                $categoriesQuery->whereIn('categories.id', $categoryIds);
+            });
+        });
+
+        return $query
             ->latest()
             ->paginate($perPage);
     }
