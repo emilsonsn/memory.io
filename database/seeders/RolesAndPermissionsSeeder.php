@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Enums\UserRole;
 use Illuminate\Database\Seeder;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
@@ -28,9 +29,9 @@ class RolesAndPermissionsSeeder extends Seeder
         $permissions = collect($permissionNames)
             ->map(fn (string $permission) => Permission::findOrCreate($permission, $guard));
 
-        Role::findOrCreate('admin', $guard)->syncPermissions($permissions);
+        Role::findOrCreate(UserRole::ADMIN->value, $guard)->syncPermissions($permissions);
 
-        Role::findOrCreate('user', $guard)->syncPermissions(
+        Role::findOrCreate(UserRole::USER->value, $guard)->syncPermissions(
             $permissions->whereIn('name', [
                 'categories.manage',
                 'memories.manage',

@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Enums\UserRole;
 use App\Models\Category;
 use App\Models\Memory;
 use App\Models\Plan;
@@ -366,7 +367,7 @@ class MemoryApiTest extends TestCase
         $user = User::factory()->create([
             'plan_id' => null,
         ]);
-        $user->assignRole('admin');
+        $user->assignRole(UserRole::ADMIN->value);
 
         $this->actingAs($user, 'api')
             ->postJson('/api/memories', [

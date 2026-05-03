@@ -2,6 +2,7 @@
 
 namespace Tests\Unit;
 
+use App\Enums\UserRole;
 use App\Models\User;
 use Database\Seeders\PlansSeeder;
 use Database\Seeders\RolesAndPermissionsSeeder;
@@ -23,9 +24,9 @@ class UsersSeederTest extends TestCase
         $basicUser = User::where('email', 'basic@memory.io')->firstOrFail();
         $premiumUser = User::where('email', 'premium@memory.io')->firstOrFail();
 
-        $this->assertTrue($admin->hasRole('admin'));
-        $this->assertTrue($basicUser->hasRole('user'));
-        $this->assertTrue($premiumUser->hasRole('user'));
+        $this->assertTrue($admin->hasRole(UserRole::ADMIN->value));
+        $this->assertTrue($basicUser->hasRole(UserRole::USER->value));
+        $this->assertTrue($premiumUser->hasRole(UserRole::USER->value));
         $this->assertSame('Basic', $basicUser->plan->name);
         $this->assertSame('Premium', $premiumUser->plan->name);
     }

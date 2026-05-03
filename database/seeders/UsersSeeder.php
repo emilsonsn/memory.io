@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Enums\UserRole;
 use App\Models\Plan;
 use App\Models\User;
 use Illuminate\Database\Seeder;
@@ -21,7 +22,7 @@ class UsersSeeder extends Seeder
                 'email_verified_at' => now(),
             ],
         );
-        $admin->syncRoles(['admin']);
+        $admin->syncRoles([UserRole::ADMIN->value]);
 
         $basicPlan = Plan::where('name', 'Basic')->firstOrFail();
         $basicUser = User::updateOrCreate(
@@ -35,7 +36,7 @@ class UsersSeeder extends Seeder
         $basicUser->forceFill([
             'plan_id' => $basicPlan->id,
         ])->save();
-        $basicUser->syncRoles(['user']);
+        $basicUser->syncRoles([UserRole::USER->value]);
 
         $premiumPlan = Plan::where('name', 'Premium')->firstOrFail();
         $premiumUser = User::updateOrCreate(
@@ -49,6 +50,6 @@ class UsersSeeder extends Seeder
         $premiumUser->forceFill([
             'plan_id' => $premiumPlan->id,
         ])->save();
-        $premiumUser->syncRoles(['user']);
+        $premiumUser->syncRoles([UserRole::USER->value]);
     }
 }

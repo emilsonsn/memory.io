@@ -2,6 +2,7 @@
 
 namespace App\Services\User;
 
+use App\Enums\UserRole;
 use App\Models\Plan;
 use App\Models\User;
 use App\Support\VersionedCache;
@@ -59,7 +60,7 @@ class UserService
     public function create(array $data): User
     {
         $this->user = User::create($data);
-        $this->user->assignRole(Role::findOrCreate('user'));
+        $this->user->assignRole(Role::findOrCreate(UserRole::USER->value));
 
         VersionedCache::bump('users.list');
 

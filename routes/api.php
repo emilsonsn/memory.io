@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\UserRole;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\MemoryController;
@@ -33,8 +34,8 @@ Route::middleware('auth:api')->group(function (): void {
         Route::get('{memory}/export', [MemoryController::class, 'export'])->name('export');
     });
 
-    Route::apiResource('plans', PlanController::class)->middleware('role:admin');
-    Route::apiResource('users', UserController::class)->except('store')->middleware('role:admin');
+    Route::apiResource('plans', PlanController::class)->middleware('role:'.UserRole::ADMIN->value);
+    Route::apiResource('users', UserController::class)->except('store')->middleware('role:'.UserRole::ADMIN->value);
     Route::apiResource('categories', CategoryController::class);    
     Route::apiResource('memories', MemoryController::class);
 });

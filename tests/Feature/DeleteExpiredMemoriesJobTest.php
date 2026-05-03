@@ -2,9 +2,12 @@
 
 namespace Tests\Feature;
 
+use App\Enums\MemoryAuditEvent;
+use App\Enums\MemoryDeletionReason;
 use App\Jobs\DeleteExpiredMemoriesJob;
 use App\Jobs\NotifyMemoriesPendingDeletionJob;
 use App\Enums\NotificationType;
+use App\Enums\SystemActor;
 use App\Models\Memory;
 use App\Models\Notification;
 use App\Models\User;
@@ -46,8 +49,8 @@ class DeleteExpiredMemoriesJobTest extends TestCase
 
         $this->assertDatabaseHas('activity_log', [
             'log_name' => 'audit',
-            'event' => 'memory.deleted_due_date',
-            'description' => 'memory.deleted_due_date',
+            'event' => MemoryAuditEvent::DELETED_DUE_DATE->value,
+            'description' => MemoryAuditEvent::DELETED_DUE_DATE->value,
             'subject_type' => Memory::class,
             'subject_id' => $expiredMemory->id,
             'causer_type' => null,
@@ -55,13 +58,13 @@ class DeleteExpiredMemoriesJobTest extends TestCase
         ]);
 
         $activity = Activity::query()
-            ->where('event', 'memory.deleted_due_date')
+            ->where('event', MemoryAuditEvent::DELETED_DUE_DATE->value)
             ->where('subject_id', $expiredMemory->id)
             ->firstOrFail();
 
         $this->assertSame('Expired memory', data_get($activity->properties->toArray(), 'old.title'));
-        $this->assertSame('due_date_expired', data_get($activity->properties->toArray(), 'reason'));
-        $this->assertSame('scheduler', data_get($activity->properties->toArray(), 'deleted_by'));
+        $this->assertSame(MemoryDeletionReason::DUE_DATE_EXPIRED->value, data_get($activity->properties->toArray(), 'reason'));
+        $this->assertSame(SystemActor::SCHEDULER->value, data_get($activity->properties->toArray(), 'deleted_by'));
 
         $this->assertDatabaseHas('notifications', [
             'user_id' => $user->id,

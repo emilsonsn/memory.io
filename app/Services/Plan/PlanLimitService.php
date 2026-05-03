@@ -2,6 +2,7 @@
 
 namespace App\Services\Plan;
 
+use App\Enums\UserRole;
 use App\Exceptions\PlanLimitExceededException;
 use App\Models\User;
 
@@ -9,7 +10,7 @@ class PlanLimitService
 {
     public function ensureCanCreateMemory(User $user): void
     {
-        if ($user->hasRole('admin')) {
+        if ($user->hasRole(UserRole::ADMIN->value)) {
             return;
         }
 
@@ -26,7 +27,7 @@ class PlanLimitService
 
     public function ensureCanCreateCategory(User $user): void
     {
-        if ($user->hasRole('admin')) {
+        if ($user->hasRole(UserRole::ADMIN->value)) {
             return;
         }
 
@@ -43,11 +44,11 @@ class PlanLimitService
 
     public function canExport(User $user): bool
     {
-        return $user->hasRole('admin') || (bool) $user->plan?->can_export;
+        return $user->hasRole(UserRole::ADMIN->value) || (bool) $user->plan?->can_export;
     }
 
     public function canUseAi(User $user): bool
     {
-        return $user->hasRole('admin') || (bool) $user->plan?->can_use_ai;
+        return $user->hasRole(UserRole::ADMIN->value) || (bool) $user->plan?->can_use_ai;
     }
 }

@@ -2,6 +2,9 @@
 
 namespace App\Jobs;
 
+use App\Enums\MemoryAuditEvent;
+use App\Enums\MemoryDeletionReason;
+use App\Enums\SystemActor;
 use App\Events\MemoryDeletedByScheduler;
 use App\Models\Memory;
 use App\Support\VersionedCache;
@@ -42,15 +45,15 @@ class DeleteExpiredMemoriesJob implements ShouldQueue
 
                 activity('audit')
                     ->performedOn($memory)
-                    ->event('memory.deleted_due_date')
+                    ->event(MemoryAuditEvent::DELETED_DUE_DATE->value)
                     ->withProperties([
                         'old' => $snapshot,
                         'new' => null,
                         'changed_fields' => array_keys($snapshot),
-                        'reason' => 'due_date_expired',
-                        'deleted_by' => 'scheduler',
+                        'reason' => MemoryDeletionReason::DUE_DATE_EXPIRED->value,
+                        'deleted_by' => SystemActor::SCHEDULER->value,
                     ])
-                    ->log('memory.deleted_due_date');
+                    ->log(MemoryAuditEvent::DELETED_DUE_DATE->value);
 
                 VersionedCache::bump('memories.list', $memory->user_id);
                 VersionedCache::bump('memories.logs', $memory->user_id);

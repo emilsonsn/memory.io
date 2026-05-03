@@ -2,6 +2,7 @@
 
 namespace Tests\Unit;
 
+use App\Enums\UserRole;
 use App\Models\Plan;
 use App\Models\User;
 use App\Services\Plan\PlanLimitService;
@@ -36,7 +37,7 @@ class PlanLimitServiceTest extends TestCase
             'can_use_ai' => false,
         ]);
         $user = User::factory()->for($plan)->create();
-        $user->assignRole('admin');
+        $user->assignRole(UserRole::ADMIN->value);
 
         $service = app(PlanLimitService::class);
 

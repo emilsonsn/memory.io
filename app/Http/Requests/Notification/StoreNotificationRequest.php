@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Notification;
 
+use App\Enums\NotificationType;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
@@ -22,7 +23,7 @@ class StoreNotificationRequest extends FormRequest
         return [
             'title' => ['required', 'string', 'max:255'],
             'url' => ['sometimes', 'nullable', 'string', 'max:255'],
-            'type' => ['sometimes', 'nullable', Rule::in(['default', 'process'])],
+            'type' => ['sometimes', 'nullable', Rule::in(NotificationType::values())],
         ];
     }
 

@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Enums\UserRole;
 use App\Models\Plan;
 use App\Models\User;
 use Database\Seeders\RolesAndPermissionsSeeder;
@@ -23,7 +24,7 @@ class PlanApiTest extends TestCase
         $this->seed(RolesAndPermissionsSeeder::class);
 
         $user = User::factory()->create();
-        $user->assignRole('user');
+        $user->assignRole(UserRole::USER->value);
 
         $this->actingAs($user, 'api')
             ->getJson('/api/plans')
@@ -35,7 +36,7 @@ class PlanApiTest extends TestCase
         $this->seed(RolesAndPermissionsSeeder::class);
 
         $user = User::factory()->create();
-        $user->assignRole('admin');
+        $user->assignRole(UserRole::ADMIN->value);
         $plan = Plan::factory()->create([
             'name' => 'Premium',
         ]);
@@ -55,7 +56,7 @@ class PlanApiTest extends TestCase
         $this->seed(RolesAndPermissionsSeeder::class);
 
         $user = User::factory()->create();
-        $user->assignRole('admin');
+        $user->assignRole(UserRole::ADMIN->value);
 
         $this->actingAs($user, 'api')
             ->postJson('/api/plans', [
@@ -93,7 +94,7 @@ class PlanApiTest extends TestCase
         $this->seed(RolesAndPermissionsSeeder::class);
 
         $user = User::factory()->create();
-        $user->assignRole('admin');
+        $user->assignRole(UserRole::ADMIN->value);
         $plan = Plan::factory()->create([
             'name' => 'Basic',
             'amount' => '9.90',

@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Enums\UserRole;
 use App\Models\Plan;
 use App\Models\User;
 use Database\Seeders\RolesAndPermissionsSeeder;
@@ -61,7 +62,7 @@ class UserApiTest extends TestCase
         $this->seed(RolesAndPermissionsSeeder::class);
 
         $user = User::factory()->create();
-        $user->assignRole('user');
+        $user->assignRole(UserRole::USER->value);
 
         $this->actingAs($user, 'api')
             ->getJson('/api/users')
@@ -75,7 +76,7 @@ class UserApiTest extends TestCase
         $user = User::factory()->create([
             'name' => 'Visible User',
         ]);
-        $user->assignRole('admin');
+        $user->assignRole(UserRole::ADMIN->value);
 
         $this->actingAs($user, 'api')
             ->getJson('/api/users')
@@ -92,7 +93,7 @@ class UserApiTest extends TestCase
         $this->seed(RolesAndPermissionsSeeder::class);
 
         $user = User::factory()->create();
-        $user->assignRole('admin');
+        $user->assignRole(UserRole::ADMIN->value);
         $targetUser = User::factory()->create([
             'name' => 'Old Name',
         ]);
@@ -130,7 +131,7 @@ class UserApiTest extends TestCase
         $this->seed(RolesAndPermissionsSeeder::class);
 
         $user = User::factory()->create();
-        $user->assignRole('admin');
+        $user->assignRole(UserRole::ADMIN->value);
         $currentPlan = Plan::factory()->create();
         $newPlan = Plan::factory()->create();
         $targetUser = User::factory()->create([
