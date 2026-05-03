@@ -6,6 +6,7 @@ use App\Models\Category;
 use App\Services\Concerns\AuditsActivities;
 use App\Services\Plan\PlanLimitService;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Str;
 use RuntimeException;
 
 class CategoryService
@@ -65,7 +66,16 @@ class CategoryService
         $query = Category::query()
             ->with('parent');
 
-        $query->when(! empty($filters['color']), function ($query) use ($filters) {
+        $query->when(! empty($filters['text']), function ($query) use ($filters) {
+            $searchText = Str::lower(trim((string) $filters['text']));
+            $searchPattern = "%{$searchText}%";
+
+            $query->where(function ($innerQuery) use ($searchPattern): void {
+                $innerQuery
+                    ->whereRaw('LOWER(label) LIKE ?', [$searchPattern])
+                    ->orWhereRaw('LOWER(description) LIKE ?', [$searchPattern]);
+            });
+        })->when(! empty($filters['color']), function ($query) use ($filters) {
             $query->where('color', (string) $filters['color']);
         });
 

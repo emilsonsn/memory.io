@@ -355,6 +355,14 @@
                         }
                     },
                     {
+                        "name": "text",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "maxLength": 255
+                        }
+                    },
+                    {
                         "name": "color",
                         "in": "query",
                         "schema": {

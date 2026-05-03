@@ -81,6 +81,42 @@ class CategoryApiTest extends TestCase
             ]);
     }
 
+    public function test_user_can_filter_categories_by_text_ignoring_case(): void
+    {
+        $user = User::factory()->create();
+
+        $matchingCategory = Category::factory()->for($user)->create([
+            'label' => 'Important Mixed CASE Category',
+            'description' => 'Personal references.',
+        ]);
+
+        $descriptionMatchCategory = Category::factory()->for($user)->create([
+            'label' => 'Archive',
+            'description' => 'Contains MIXED case material.',
+        ]);
+
+        Category::factory()->for($user)->create([
+            'label' => 'Work',
+            'description' => 'No matching text.',
+        ]);
+
+        $this->actingAs($user, 'api')
+            ->getJson('/api/categories?text=mixed case')
+            ->assertOk()
+            ->assertJsonPath('success', true)
+            ->assertJsonFragment([
+                'id' => $matchingCategory->id,
+                'label' => 'Important Mixed CASE Category',
+            ])
+            ->assertJsonFragment([
+                'id' => $descriptionMatchCategory->id,
+                'label' => 'Archive',
+            ])
+            ->assertJsonMissing([
+                'label' => 'Work',
+            ]);
+    }
+
     public function test_user_can_sort_categories(): void
     {
         $user = User::factory()->create();
