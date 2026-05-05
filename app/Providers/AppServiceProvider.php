@@ -9,9 +9,11 @@ use App\Listeners\CreateMemoryDeletedNotification;
 use App\Listeners\CreateMemoryDeletionReminderNotification;
 use App\Listeners\ProcessCategoryExportRequested;
 use App\Models\Category;
+use App\Models\Favorite;
 use App\Models\Memory;
 use App\Models\Notification;
 use App\Policies\CategoryPolicy;
+use App\Policies\FavoritePolicy;
 use App\Policies\MemoryPolicy;
 use App\Policies\NotificationPolicy;
 use Dedoc\Scramble\Scramble;
@@ -42,6 +44,7 @@ class AppServiceProvider extends ServiceProvider
 
         Gate::policy(Memory::class, MemoryPolicy::class);
         Gate::policy(Category::class, CategoryPolicy::class);
+        Gate::policy(Favorite::class, FavoritePolicy::class);
         Gate::policy(Notification::class, NotificationPolicy::class);
 
         Scramble::configure()

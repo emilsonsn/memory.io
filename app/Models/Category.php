@@ -54,6 +54,11 @@ class Category extends Model
             ->withTimestamps();
     }
 
+    public function favorites(): HasMany
+    {
+        return $this->hasMany(Favorite::class);
+    }
+
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);

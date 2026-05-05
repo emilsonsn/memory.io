@@ -43,6 +43,9 @@ O projeto foi construído para oferecer:
 - Notifications
 	- listagem e marcação como lida
 	- criação por eventos de domínio
+- Favorites
+	- favoritos por usuário para memórias ou categorias
+	- cada favorito referencia exatamente uma memória ou uma categoria
 
 ## Arquitetura
 
@@ -85,6 +88,10 @@ Protegidas (`auth:api`):
 	- `GET /api/notifications`
 	- `PATCH /api/notifications/read`
 	- `PATCH /api/notifications/{notification}/read`
+- Favorites
+	- `GET /api/favorites`
+	- `POST /api/favorites` com `memory_id` ou `category_id`
+	- `DELETE /api/favorites` com `memory_id` ou `category_id`
 - Memories
 	- `GET /api/memories`
 	- `POST /api/memories`
@@ -138,7 +145,7 @@ Após `migrate --seed`, os usuários padrão são:
 Exemplo de execução das suítes críticas:
 
 ```bash
-./vendor/bin/sail artisan test tests/Feature/MemoryApiTest.php tests/Feature/CategoryApiTest.php tests/Feature/NotificationApiTest.php tests/Feature/DeleteExpiredMemoriesJobTest.php
+./vendor/bin/sail artisan test tests/Feature/MemoryApiTest.php tests/Feature/CategoryApiTest.php tests/Feature/FavoriteApiTest.php tests/Feature/NotificationApiTest.php tests/Feature/DeleteExpiredMemoriesJobTest.php
 ```
 
 Executar todos os testes:

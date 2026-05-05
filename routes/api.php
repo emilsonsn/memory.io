@@ -5,6 +5,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\ChatController;
 use App\Http\Controllers\ColorController;
+use App\Http\Controllers\FavoriteController;
 use App\Http\Controllers\MemoryController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\PlanController;
@@ -40,6 +41,12 @@ Route::middleware('auth:api')->group(function (): void {
         Route::get('/', [NotificationController::class, 'index'])->name('index');
         Route::patch('read', [NotificationController::class, 'readMany'])->name('read-many');
         Route::patch('{notification}/read', [NotificationController::class, 'read'])->name('read');
+    });
+
+    Route::prefix('favorites')->name('favorites.')->group(function (): void {
+        Route::get('/', [FavoriteController::class, 'index'])->name('index');
+        Route::post('/', [FavoriteController::class, 'store'])->name('store');
+        Route::delete('/', [FavoriteController::class, 'destroy'])->name('destroy');
     });
 
     Route::prefix('memories')->name('memories.')->group(function (): void {
