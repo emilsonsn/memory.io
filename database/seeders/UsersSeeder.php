@@ -43,6 +43,11 @@ class UsersSeeder extends Seeder
                 'role' => UserRole::ADMIN,
             ],
             [
+                'name' => 'Gabriel Souza',
+                'email' => 'gabrielsndev@gmail.com',
+                'role' => UserRole::ADMIN,
+            ],
+            [
                 'name' => 'Basic User',
                 'email' => 'basic@memory.io',
                 'role' => UserRole::USER,
