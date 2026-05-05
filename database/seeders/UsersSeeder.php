@@ -14,42 +14,76 @@ class UsersSeeder extends Seeder
      */
     public function run(): void
     {
-        $admin = User::updateOrCreate(
-            ['email' => 'admin@memory.io'],
+        $defaultPassword = '@123Mudar';
+
+        $users = [
             [
                 'name' => 'Admin',
-                'password' => 'password',
-                'email_verified_at' => now(),
+                'email' => 'admin@memory.io',
+                'role' => UserRole::ADMIN,
             ],
-        );
-        $admin->syncRoles([UserRole::ADMIN->value]);
-
-        $basicPlan = Plan::where('name', 'Basic')->firstOrFail();
-        $basicUser = User::updateOrCreate(
-            ['email' => 'basic@memory.io'],
+            [
+                'name' => 'Clara Costarc',
+                'email' => 'claracostarc@gmail.com',
+                'role' => UserRole::ADMIN,
+            ],
+            [
+                'name' => 'Nathaliany Colly',
+                'email' => 'contatonathalianycolly@gmail.com',
+                'role' => UserRole::ADMIN,
+            ],
+            [
+                'name' => 'Emilson',
+                'email' => 'emilsonsn2@gmail.com',
+                'role' => UserRole::ADMIN,
+            ],
+            [
+                'name' => 'Let Moura',
+                'email' => 'letmoura2017@gmail.com',
+                'role' => UserRole::ADMIN,
+            ],
             [
                 'name' => 'Basic User',
-                'password' => 'password',
-                'email_verified_at' => now(),
+                'email' => 'basic@memory.io',
+                'role' => UserRole::USER,
+                'plan' => 'Basic',
             ],
-        );
-        $basicUser->forceFill([
-            'plan_id' => $basicPlan->id,
-        ])->save();
-        $basicUser->syncRoles([UserRole::USER->value]);
-
-        $premiumPlan = Plan::where('name', 'Premium')->firstOrFail();
-        $premiumUser = User::updateOrCreate(
-            ['email' => 'premium@memory.io'],
             [
                 'name' => 'Premium User',
-                'password' => 'password',
-                'email_verified_at' => now(),
+                'email' => 'premium@memory.io',
+                'role' => UserRole::USER,
+                'plan' => 'Premium',
             ],
-        );
-        $premiumUser->forceFill([
-            'plan_id' => $premiumPlan->id,
-        ])->save();
-        $premiumUser->syncRoles([UserRole::USER->value]);
+        ];
+
+        $plansByName = Plan::query()
+            ->whereIn('name', collect($users)->pluck('plan')->filter()->unique()->values())
+            ->get()
+            ->keyBy('name');
+
+        foreach ($users as $userData) {
+            $user = User::updateOrCreate(
+                ['email' => $userData['email']],
+                [
+                    'name' => $userData['name'],
+                    'password' => $defaultPassword,
+                    'email_verified_at' => now(),
+                ],
+            );
+
+            if (isset($userData['plan'])) {
+                $plan = $plansByName->get($userData['plan']);
+
+                if (! $plan) {
+                    $plan = Plan::where('name', $userData['plan'])->firstOrFail();
+                }
+
+                $user->forceFill([
+                    'plan_id' => $plan->id,
+                ])->save();
+            }
+
+            $user->syncRoles([$userData['role']->value]);
+        }
     }
 }
