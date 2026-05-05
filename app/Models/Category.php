@@ -3,9 +3,9 @@
 namespace App\Models;
 
 use App\Enums\NoteColor;
+use App\Models\Concerns\OwnedByAuthenticatedUser;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
-use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -17,22 +17,10 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 #[Hidden(['user_id'])]
 class Category extends Model
 {
-    use HasFactory, HasUuids;
+    use HasFactory, HasUuids, OwnedByAuthenticatedUser;
 
     protected static function booted(): void
     {
-        static::addGlobalScope('owned_by_authenticated_user', function (Builder $builder): void {
-            $userId = auth()->id();
-
-            if ($userId === null) {
-                $builder->whereNull($builder->qualifyColumn('user_id'));
-
-                return;
-            }
-
-            $builder->where($builder->qualifyColumn('user_id'), $userId);
-        });
-
         static::creating(function (Category $category): void {
             $category->user_id ??= auth()->id();
         });

@@ -3,9 +3,9 @@
 namespace App\Models;
 
 use App\Enums\NoteColor;
+use App\Models\Concerns\OwnedByAuthenticatedUser;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
-use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -18,22 +18,10 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 #[Hidden(['user_id'])]
 class Memory extends Model
 {
-    use HasFactory, HasUuids, SoftDeletes;
+    use HasFactory, HasUuids, OwnedByAuthenticatedUser, SoftDeletes;
 
     protected static function booted(): void
     {
-        static::addGlobalScope('owned_by_authenticated_user', function (Builder $builder): void {
-            $userId = auth()->id();
-
-            if ($userId === null) {
-                $builder->whereNull($builder->qualifyColumn('user_id'));
-
-                return;
-            }
-
-            $builder->where($builder->qualifyColumn('user_id'), $userId);
-        });
-
         static::creating(function (Memory $memory): void {
             $memory->user_id ??= auth()->id();
         });
