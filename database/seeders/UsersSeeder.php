@@ -25,27 +25,27 @@ class UsersSeeder extends Seeder
             [
                 'name' => 'Clara Costarc',
                 'email' => 'claracostarc@gmail.com',
-                'role' => UserRole::ADMIN,
+                'role' => UserRole::USER,
             ],
             [
                 'name' => 'Nathaliany Colly',
                 'email' => 'contatonathalianycolly@gmail.com',
-                'role' => UserRole::ADMIN,
+                'role' => UserRole::USER,
             ],
             [
                 'name' => 'Emilson',
                 'email' => 'emilsonsn2@gmail.com',
-                'role' => UserRole::ADMIN,
+                'role' => UserRole::USER,
             ],
             [
                 'name' => 'Let Moura',
                 'email' => 'letmoura2017@gmail.com',
-                'role' => UserRole::ADMIN,
+                'role' => UserRole::USER,
             ],
             [
                 'name' => 'Gabriel Souza',
                 'email' => 'gabrielsndev@gmail.com',
-                'role' => UserRole::ADMIN,
+                'role' => UserRole::USER,
             ],
             [
                 'name' => 'Basic User',
