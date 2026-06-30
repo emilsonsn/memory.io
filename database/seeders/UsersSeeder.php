@@ -26,16 +26,19 @@ class UsersSeeder extends Seeder
                 'name' => 'Clara Costarc',
                 'email' => 'claracostarc@gmail.com',
                 'role' => UserRole::USER,
+                'plan' => 'Premium',
             ],
             [
                 'name' => 'Nathaliany Colly',
                 'email' => 'contatonathalianycolly@gmail.com',
                 'role' => UserRole::USER,
+                'plan' => 'Premium',
             ],
             [
                 'name' => 'Emilson',
                 'email' => 'emilsonsn2@gmail.com',
                 'role' => UserRole::USER,
+                'plan' => 'Premium',
             ],
             [
                 'name' => 'Let Moura',
@@ -46,23 +49,20 @@ class UsersSeeder extends Seeder
                 'name' => 'Gabriel Souza',
                 'email' => 'gabrielsndev@gmail.com',
                 'role' => UserRole::USER,
-            ],
-            [
-                'name' => 'Basic User',
-                'email' => 'basic@memory.io',
-                'role' => UserRole::USER,
-                'plan' => 'Basic',
-            ],
-            [
-                'name' => 'Premium User',
-                'email' => 'premium@memory.io',
-                'role' => UserRole::USER,
+                
                 'plan' => 'Premium',
             ],
         ];
 
+        $planNames = collect($users)
+            ->pluck('plan')
+            ->filter()
+            ->push('Free')
+            ->unique()
+            ->values();
+
         $plansByName = Plan::query()
-            ->whereIn('name', collect($users)->pluck('plan')->filter()->unique()->values())
+            ->whereIn('name', $planNames)
             ->get()
             ->keyBy('name');
 
@@ -76,11 +76,17 @@ class UsersSeeder extends Seeder
                 ],
             );
 
-            if (isset($userData['plan'])) {
-                $plan = $plansByName->get($userData['plan']);
+            $planName = $userData['plan'] ?? null;
+
+            if ($planName === null && $userData['role'] === UserRole::USER) {
+                $planName = 'Free';
+            }
+
+            if ($planName !== null) {
+                $plan = $plansByName->get($planName);
 
                 if (! $plan) {
-                    $plan = Plan::where('name', $userData['plan'])->firstOrFail();
+                    $plan = Plan::where('name', $planName)->firstOrFail();
                 }
 
                 $user->forceFill([

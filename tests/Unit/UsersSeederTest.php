@@ -21,12 +21,15 @@ class UsersSeederTest extends TestCase
         $this->seed(UsersSeeder::class);
 
         $admin = User::where('email', 'admin@memory.io')->firstOrFail();
+        $emilson = User::where('email', 'emilsonsn2@gmail.com')->firstOrFail();
         $basicUser = User::where('email', 'basic@memory.io')->firstOrFail();
         $premiumUser = User::where('email', 'premium@memory.io')->firstOrFail();
 
         $this->assertTrue($admin->hasRole(UserRole::ADMIN->value));
+        $this->assertTrue($emilson->hasRole(UserRole::USER->value));
         $this->assertTrue($basicUser->hasRole(UserRole::USER->value));
         $this->assertTrue($premiumUser->hasRole(UserRole::USER->value));
+        $this->assertSame('Free', $emilson->plan->name);
         $this->assertSame('Basic', $basicUser->plan->name);
         $this->assertSame('Premium', $premiumUser->plan->name);
     }
