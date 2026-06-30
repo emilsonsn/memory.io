@@ -2,18 +2,26 @@
 
 namespace App\Http\Controllers;
 
-use App\Events\CategoryExportRequested;
+use App\Http\Requests\Category\ImportMemoriesRequest;
 use App\Http\Requests\Category\IndexCategoryRequest;
 use App\Http\Requests\Category\StoreCategoryRequest;
 use App\Http\Requests\Category\UpdateCategoryRequest;
 use App\Http\Resources\CategoryResource;
+use App\Http\Resources\MemoryResource;
 use App\Models\Category;
+use App\Services\Category\CategoryExportService;
+use App\Services\Category\CategoryImportService;
 use App\Services\Category\CategoryService;
 use Illuminate\Http\JsonResponse;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class CategoryController extends Controller
 {
-    public function __construct(private readonly CategoryService $categoryService) {}
+    public function __construct(
+        private readonly CategoryService $categoryService,
+        private readonly CategoryImportService $categoryImportService,
+        private readonly CategoryExportService $categoryExportService,
+    ) {}
 
     public function index(IndexCategoryRequest $request): JsonResponse
     {
@@ -97,19 +105,35 @@ class CategoryController extends Controller
         ]);
     }
 
-    public function export(Category $category): JsonResponse
+    public function import(ImportMemoriesRequest $request, Category $category): JsonResponse
     {
-        $this->authorize('export', $category);
+        $this->authorize('import', $category);
 
-        event(new CategoryExportRequested(
-            categoryId: (string) $category->id,
-            userId: (string) auth()->id(),
-        ));
+        $memories = $this->categoryImportService->import(
+            category: $category,
+            files: $request->file('files', []),
+        );
 
         return response()->json([
             'success' => true,
-            'message' => 'Category export started. You will be notified when it is ready.',
-            'data' => null,
-        ], 202);
+            'message' => 'Memories imported successfully.',
+            'data' => MemoryResource::collection($memories),
+        ], 201);
+    }
+
+    public function export(Category $category): BinaryFileResponse
+    {
+        $this->authorize('export', $category);
+
+        $export = $this->categoryExportService->export(
+            category: $category,
+            userId: (string) auth()->id(),
+        );
+
+        return response()
+            ->download($export['path'], $export['filename'], [
+                'Content-Type' => 'application/zip',
+            ])
+            ->deleteFileAfterSend();
     }
 }

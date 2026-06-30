@@ -57,6 +57,7 @@ Route::middleware('auth:api')->group(function (): void {
     });
 
     Route::prefix('categories')->name('categories.')->group(function (): void {
+        Route::post('{category}/import', [CategoryController::class, 'import'])->name('import');
         Route::post('{category}/export', [CategoryController::class, 'export'])->name('export');
     });
 

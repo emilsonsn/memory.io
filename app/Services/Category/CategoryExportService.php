@@ -15,6 +15,29 @@ use ZipArchive;
 
 class CategoryExportService
 {
+    /**
+     * @return array{path: string, filename: string}
+     */
+    public function export(Category $category, string $userId): array
+    {
+        $rootCategory = Category::withoutGlobalScopes()
+            ->where('user_id', $userId)
+            ->where('id', $category->id)
+            ->firstOrFail();
+
+        $tempBaseDir = $this->buildTempCategoryExport($rootCategory, $userId);
+        $zipAbsolutePath = storage_path('app/tmp/category-exports/'.Str::uuid()->toString().'.zip');
+        File::ensureDirectoryExists(dirname($zipAbsolutePath));
+
+        $this->zipDirectory($tempBaseDir, $zipAbsolutePath);
+        File::deleteDirectory($tempBaseDir);
+
+        return [
+            'path' => $zipAbsolutePath,
+            'filename' => $this->sanitizeDirectoryName($rootCategory->label, 'category-'.$rootCategory->id).'.zip',
+        ];
+    }
+
     public function exportAndNotify(string $categoryId, string $userId): void
     {
         $rootCategory = Category::withoutGlobalScopes()
@@ -22,23 +45,12 @@ class CategoryExportService
             ->where('id', $categoryId)
             ->firstOrFail();
 
-        $tempBaseDir = storage_path('app/tmp/category-exports/'.Str::uuid()->toString());
-        File::ensureDirectoryExists($tempBaseDir);
-
-        $rootFolderName = $this->sanitizeDirectoryName($rootCategory->label, 'category-'.$rootCategory->id);
-        $rootFolderPath = $tempBaseDir.DIRECTORY_SEPARATOR.$rootFolderName;
-        File::ensureDirectoryExists($rootFolderPath);
-
-        $this->buildCategoryTree(
-            category: $rootCategory,
-            directoryPath: $rootFolderPath,
-            userId: $userId,
-        );
+        $tempBaseDir = $this->buildTempCategoryExport($rootCategory, $userId);
 
         $zipRelativePath = sprintf(
-            'exports/categories/%s/category-%s-%s.zip',
+            'exports/categories/%s/%s-%s.zip',
             $userId,
-            $rootCategory->id,
+            $this->sanitizeDirectoryName($rootCategory->label, 'category-'.$rootCategory->id),
             now()->format('YmdHis'),
         );
 
@@ -48,16 +60,7 @@ class CategoryExportService
         $zipAbsolutePath = $publicDisk->path($zipRelativePath);
         File::ensureDirectoryExists(dirname($zipAbsolutePath));
 
-        $zip = new ZipArchive;
-        $opened = $zip->open($zipAbsolutePath, ZipArchive::CREATE | ZipArchive::OVERWRITE);
-
-        if ($opened !== true) {
-            throw new RuntimeException('Could not create category export archive.');
-        }
-
-        $this->addDirectoryToZip($zip, $tempBaseDir, '');
-        $zip->close();
-
+        $this->zipDirectory($tempBaseDir, $zipAbsolutePath);
         File::deleteDirectory($tempBaseDir);
 
         $publicUrl = $publicDisk->url($zipRelativePath);
@@ -72,6 +75,37 @@ class CategoryExportService
             'type' => NotificationType::PROCESS,
             'seen' => false,
         ]);
+    }
+
+    private function buildTempCategoryExport(Category $rootCategory, string $userId): string
+    {
+        $tempBaseDir = storage_path('app/tmp/category-exports/'.Str::uuid()->toString());
+        File::ensureDirectoryExists($tempBaseDir);
+
+        $rootFolderName = $this->sanitizeDirectoryName($rootCategory->label, 'category-'.$rootCategory->id);
+        $rootFolderPath = $tempBaseDir.DIRECTORY_SEPARATOR.$rootFolderName;
+        File::ensureDirectoryExists($rootFolderPath);
+
+        $this->buildCategoryTree(
+            category: $rootCategory,
+            directoryPath: $rootFolderPath,
+            userId: $userId,
+        );
+
+        return $tempBaseDir;
+    }
+
+    private function zipDirectory(string $sourceDirectory, string $zipAbsolutePath): void
+    {
+        $zip = new ZipArchive;
+        $opened = $zip->open($zipAbsolutePath, ZipArchive::CREATE | ZipArchive::OVERWRITE);
+
+        if ($opened !== true) {
+            throw new RuntimeException('Could not create category export archive.');
+        }
+
+        $this->addDirectoryToZip($zip, $sourceDirectory, '');
+        $zip->close();
     }
 
     private function buildCategoryTree(Category $category, string $directoryPath, string $userId): void
