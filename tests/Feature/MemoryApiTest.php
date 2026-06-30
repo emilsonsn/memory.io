@@ -434,6 +434,103 @@ class MemoryApiTest extends TestCase
         $this->assertSame($category->id, data_get($activity->properties->toArray(), 'new.category_ids.0'));
     }
 
+    public function test_user_can_duplicate_memory_with_categories(): void
+    {
+        $plan = Plan::factory()->create([
+            'max_memories' => 100,
+        ]);
+        $user = User::factory()->for($plan)->create();
+        $category = Category::factory()->for($user)->create();
+
+        $memory = Memory::factory()->for($user)->create([
+            'title' => 'Original memory',
+            'content' => 'Original content.',
+            'color' => 'green',
+            'due_date' => '2026-07-15 10:30:00',
+        ]);
+        $memory->categories()->sync([$category->id]);
+
+        $this->actingAs($user, 'api')
+            ->postJson("/api/memories/{$memory->id}/duplicate")
+            ->assertCreated()
+            ->assertJsonPath('success', true)
+            ->assertJsonPath('message', 'Memory duplicated successfully.')
+            ->assertJsonPath('data.title', 'Original memory')
+            ->assertJsonPath('data.content', 'Original content.')
+            ->assertJsonPath('data.color', 'green')
+            ->assertJsonFragment([
+                'id' => $category->id,
+            ]);
+
+        $duplicatedMemory = Memory::query()
+            ->where('title', 'Original memory')
+            ->whereKeyNot($memory->id)
+            ->firstOrFail();
+
+        $this->assertNotSame($memory->id, $duplicatedMemory->id);
+
+        $this->assertDatabaseHas('memories', [
+            'id' => $duplicatedMemory->id,
+            'user_id' => $user->id,
+            'title' => 'Original memory',
+            'content' => 'Original content.',
+            'color' => 'green',
+        ]);
+
+        $this->assertDatabaseHas('category_memory', [
+            'memory_id' => $duplicatedMemory->id,
+            'category_id' => $category->id,
+        ]);
+
+        $this->assertDatabaseHas('activity_log', [
+            'log_name' => 'audit',
+            'event' => 'memory.duplicated',
+            'description' => 'memory.duplicated',
+            'subject_type' => Memory::class,
+            'subject_id' => $duplicatedMemory->id,
+            'causer_type' => User::class,
+            'causer_id' => $user->id,
+        ]);
+
+        $activity = Activity::query()
+            ->where('event', 'memory.duplicated')
+            ->where('subject_id', $duplicatedMemory->id)
+            ->firstOrFail();
+
+        $this->assertSame($memory->id, data_get($activity->properties->toArray(), 'source_memory_id'));
+        $this->assertSame('Original memory', data_get($activity->properties->toArray(), 'new.title'));
+        $this->assertSame($category->id, data_get($activity->properties->toArray(), 'new.category_ids.0'));
+    }
+
+    public function test_user_cannot_duplicate_another_users_memory(): void
+    {
+        $plan = Plan::factory()->create([
+            'max_memories' => 100,
+        ]);
+        $user = User::factory()->for($plan)->create();
+        $otherUser = User::factory()->for($plan)->create();
+        $memory = Memory::factory()->for($otherUser)->create();
+
+        $this->actingAs($user, 'api')
+            ->postJson("/api/memories/{$memory->id}/duplicate")
+            ->assertNotFound();
+    }
+
+    public function test_user_cannot_duplicate_memory_after_reaching_plan_limit(): void
+    {
+        $plan = Plan::factory()->create([
+            'max_memories' => 1,
+        ]);
+        $user = User::factory()->for($plan)->create();
+
+        $memory = Memory::factory()->for($user)->create();
+
+        $this->actingAs($user, 'api')
+            ->postJson("/api/memories/{$memory->id}/duplicate")
+            ->assertForbidden()
+            ->assertJsonPath('code', 'PLAN_LIMIT_EXCEEDED');
+    }
+
     public function test_user_cannot_attach_another_users_category_to_memory(): void
     {
         $plan = Plan::factory()->create([

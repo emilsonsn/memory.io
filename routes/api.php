@@ -53,9 +53,11 @@ Route::middleware('auth:api')->group(function (): void {
         Route::get('trashed', [MemoryController::class, 'trashed'])->name('trashed');
         Route::get('{memory}/logs', [MemoryController::class, 'logs'])->name('logs');
         Route::get('{memory}/export', [MemoryController::class, 'export'])->name('export');
+        Route::post('{memory}/duplicate', [MemoryController::class, 'duplicate'])->name('duplicate');
     });
 
     Route::prefix('categories')->name('categories.')->group(function (): void {
+        Route::post('{category}/import', [CategoryController::class, 'import'])->name('import');
         Route::post('{category}/export', [CategoryController::class, 'export'])->name('export');
     });
 

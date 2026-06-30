@@ -2,15 +2,12 @@
 
 namespace Tests\Feature;
 
-use App\Enums\NotificationType;
 use App\Models\Category;
 use App\Models\Memory;
-use App\Models\Notification;
 use App\Models\Plan;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Str;
+use Illuminate\Http\UploadedFile;
 use Spatie\Activitylog\Models\Activity;
 use Tests\TestCase;
 use ZipArchive;
@@ -310,10 +307,87 @@ class CategoryApiTest extends TestCase
             ->assertJsonPath('code', 'PLAN_LIMIT_EXCEEDED');
     }
 
-    public function test_user_can_request_category_export_and_receive_notification_with_download_link(): void
+    public function test_user_can_import_markdown_and_text_files_into_category(): void
     {
-        Storage::fake('public');
+        $plan = Plan::factory()->create([
+            'max_memories' => 10,
+        ]);
+        $user = User::factory()->for($plan)->create();
+        $category = Category::factory()->for($user)->create([
+            'label' => 'Imported',
+        ]);
 
+        $markdown = UploadedFile::fake()->createWithContent('First note.md', "# First\nMarkdown content");
+        $text = UploadedFile::fake()->createWithContent('Second note.txt', 'Plain text content');
+
+        $this->actingAs($user, 'api')
+            ->post('/api/categories/'.$category->id.'/import', [
+                'files' => [$markdown, $text],
+            ], ['Accept' => 'application/json'])
+            ->assertCreated()
+            ->assertJsonPath('success', true)
+            ->assertJsonPath('data.0.title', 'First note')
+            ->assertJsonPath('data.0.content', "# First\nMarkdown content")
+            ->assertJsonPath('data.1.title', 'Second note')
+            ->assertJsonPath('data.1.content', 'Plain text content');
+
+        $firstMemory = Memory::query()->where('title', 'First note')->firstOrFail();
+        $secondMemory = Memory::query()->where('title', 'Second note')->firstOrFail();
+
+        $this->assertDatabaseHas('category_memory', [
+            'category_id' => $category->id,
+            'memory_id' => $firstMemory->id,
+        ]);
+
+        $this->assertDatabaseHas('category_memory', [
+            'category_id' => $category->id,
+            'memory_id' => $secondMemory->id,
+        ]);
+    }
+
+    public function test_user_cannot_import_unsupported_files_into_category(): void
+    {
+        $plan = Plan::factory()->create([
+            'max_memories' => 10,
+        ]);
+        $user = User::factory()->for($plan)->create();
+        $category = Category::factory()->for($user)->create();
+        $file = UploadedFile::fake()->createWithContent('document.pdf', 'Not a note.');
+
+        $this->actingAs($user, 'api')
+            ->post('/api/categories/'.$category->id.'/import', [
+                'files' => [$file],
+            ], ['Accept' => 'application/json'])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('files.0');
+    }
+
+    public function test_user_cannot_import_files_after_reaching_memory_plan_limit(): void
+    {
+        $plan = Plan::factory()->create([
+            'max_memories' => 1,
+        ]);
+        $user = User::factory()->for($plan)->create();
+        $category = Category::factory()->for($user)->create();
+
+        Memory::factory()->for($user)->create();
+
+        $file = UploadedFile::fake()->createWithContent('Blocked note.txt', 'This should not be imported.');
+
+        $this->actingAs($user, 'api')
+            ->post('/api/categories/'.$category->id.'/import', [
+                'files' => [$file],
+            ], ['Accept' => 'application/json'])
+            ->assertForbidden()
+            ->assertJsonPath('code', 'PLAN_LIMIT_EXCEEDED');
+
+        $this->assertDatabaseMissing('memories', [
+            'title' => 'Blocked note',
+        ]);
+    }
+
+    public function test_user_can_export_category_as_zip_file(): void
+    {
         $user = User::factory()->create();
 
         $root = Category::factory()->for($user)->create([
@@ -338,25 +412,14 @@ class CategoryApiTest extends TestCase
         ]);
         $childMemory->categories()->sync([$child->id]);
 
-        $this->actingAs($user, 'api')
-            ->postJson("/api/categories/{$root->id}/export")
-            ->assertStatus(202)
-            ->assertJsonPath('success', true);
+        $response = $this->actingAs($user, 'api')
+            ->post("/api/categories/{$root->id}/export");
 
-        $notification = Notification::withoutGlobalScopes()
-            ->where('user_id', $user->id)
-            ->where('type', NotificationType::PROCESS->value)
-            ->latest()
-            ->firstOrFail();
+        $response
+            ->assertOk()
+            ->assertDownload('Root Folder.zip');
 
-        $this->assertStringContainsString('/storage/exports/categories/'.$user->id.'/', (string) $notification->url);
-
-        $urlPath = parse_url((string) $notification->url, PHP_URL_PATH) ?? '';
-        $relativePath = Str::after($urlPath, '/storage/');
-
-        Storage::disk('public')->assertExists($relativePath);
-
-        $zipPath = Storage::disk('public')->path($relativePath);
+        $zipPath = $response->baseResponse->getFile()->getPathname();
         $zip = new ZipArchive;
 
         $this->assertTrue($zip->open($zipPath) === true);
