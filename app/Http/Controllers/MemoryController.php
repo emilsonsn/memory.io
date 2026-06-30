@@ -130,6 +130,19 @@ class MemoryController extends Controller
         ], 201);
     }
 
+    public function duplicate(Memory $memory): JsonResponse
+    {
+        $this->authorize('duplicate', $memory);
+
+        $duplicatedMemory = $this->memoryService->duplicate($memory);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Memory duplicated successfully.',
+            'data' => MemoryResource::make($duplicatedMemory),
+        ], 201);
+    }
+
     public function update(UpdateMemoryRequest $request, Memory $memory): JsonResponse
     {
         $this->authorize('update', $memory);

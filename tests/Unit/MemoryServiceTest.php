@@ -69,6 +69,37 @@ class MemoryServiceTest extends TestCase
         ]);
     }
 
+    public function test_it_duplicates_memory_with_categories_for_authenticated_user(): void
+    {
+        $plan = Plan::factory()->create([
+            'max_memories' => 100,
+        ]);
+        $user = User::factory()->for($plan)->create();
+        $category = Category::factory()->for($user)->create();
+        $memory = Memory::factory()->for($user)->create([
+            'title' => 'Original memory',
+            'content' => 'Original content.',
+            'color' => 'blue',
+            'due_date' => '2026-07-15 10:30:00',
+        ]);
+        $memory->categories()->sync([$category->id]);
+
+        $this->actingAs($user);
+
+        $duplicatedMemory = app(MemoryService::class)->duplicate($memory);
+
+        $this->assertNotSame($memory->id, $duplicatedMemory->id);
+        $this->assertSame('Original memory', $duplicatedMemory->title);
+        $this->assertSame('Original content.', $duplicatedMemory->content);
+        $this->assertSame('blue', $duplicatedMemory->color->value);
+        $this->assertSame($user->id, $duplicatedMemory->user_id);
+
+        $this->assertDatabaseHas('category_memory', [
+            'memory_id' => $duplicatedMemory->id,
+            'category_id' => $category->id,
+        ]);
+    }
+
     public function test_it_lists_only_authenticated_users_memories(): void
     {
         $user = User::factory()->create();

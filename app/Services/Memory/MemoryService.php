@@ -147,6 +147,33 @@ class MemoryService
         return $memory;
     }
 
+    public function duplicate(Memory $sourceMemory): Memory
+    {
+        $sourceMemory->loadMissing('categories');
+
+        $this->planLimitService->ensureCanCreateMemory(auth()->user());
+
+        $this->memory = Memory::create([
+            'title' => $sourceMemory->title,
+            'content' => $sourceMemory->content,
+            'color' => $sourceMemory->color,
+            'due_date' => $sourceMemory->due_date,
+        ]);
+
+        $this->syncCategories($sourceMemory->categories->pluck('id')->all());
+
+        $memory = $this->object();
+
+        $this->audit('memory.duplicated', $memory, [
+            'old' => null,
+            'new' => $this->memoryAuditSnapshot($memory),
+            'changed_fields' => ['title', 'content', 'color', 'due_date', 'category_ids'],
+            'source_memory_id' => $sourceMemory->id,
+        ]);
+
+        return $memory;
+    }
+
     public function update(array $data): Memory
     {
         $this->verifyMemoryIsSet();

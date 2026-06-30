@@ -32,6 +32,11 @@ class MemoryPolicy
         return $user->isAdmin() || $memory->user_id === $user->id;
     }
 
+    public function duplicate(User $user, Memory $memory): bool
+    {
+        return $this->view($user, $memory) && $this->create($user);
+    }
+
     public function logs(User $user, Memory $memory): bool
     {
         return $this->view($user, $memory);
