@@ -17,7 +17,7 @@ class PlansSeeder extends Seeder
             [
                 'description' => 'Free plan',
                 'amount' => 0,
-                'max_memories' => 100,
+                'max_memories' => 1000,
                 'max_categories' => 10,
                 'can_export' => false,
                 'can_use_ai' => false,
@@ -29,7 +29,7 @@ class PlansSeeder extends Seeder
             [
                 'description' => 'Basic plan',
                 'amount' => 29.90,
-                'max_memories' => 500,
+                'max_memories' => 5000,
                 'max_categories' => 50,
                 'can_export' => true,
                 'can_use_ai' => false,
