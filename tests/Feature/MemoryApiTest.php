@@ -64,8 +64,8 @@ class MemoryApiTest extends TestCase
             'due_date' => '2026-05-20 10:00:00',
             'created_at' => '2026-05-10 09:00:00',
             'updated_at' => '2026-05-12 14:00:00',
+            'category_id' => $targetCategory->id,
         ]);
-        $matchingMemory->update(['category_id' => $targetCategory->id]);
 
         $wrongDueDateMemory = Memory::factory()->for($user)->create([
             'title' => 'Project kickoff draft',
@@ -74,8 +74,8 @@ class MemoryApiTest extends TestCase
             'due_date' => '2026-06-10 10:00:00',
             'created_at' => '2026-05-10 09:00:00',
             'updated_at' => '2026-05-12 14:00:00',
+            'category_id' => $targetCategory->id,
         ]);
-        $wrongDueDateMemory->update(['category_id' => $targetCategory->id]);
 
         $wrongCategoryMemory = Memory::factory()->for($user)->create([
             'title' => 'Project kickoff retrospective',
@@ -84,8 +84,8 @@ class MemoryApiTest extends TestCase
             'due_date' => '2026-05-20 10:00:00',
             'created_at' => '2026-05-10 09:00:00',
             'updated_at' => '2026-05-12 14:00:00',
+            'category_id' => $otherCategory->id,
         ]);
-        $wrongCategoryMemory->update(['category_id' => $otherCategory->id]);
 
         $otherUserMemory = Memory::factory()->for($otherUser)->create([
             'title' => 'Project kickoff private',
@@ -94,8 +94,8 @@ class MemoryApiTest extends TestCase
             'due_date' => '2026-05-20 10:00:00',
             'created_at' => '2026-05-10 09:00:00',
             'updated_at' => '2026-05-12 14:00:00',
+            'category_id' => $externalCategory->id,
         ]);
-        $otherUserMemory->update(['category_id' => $externalCategory->id]);
 
         $query = http_build_query([
             'created_from' => '2026-05-01',

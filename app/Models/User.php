@@ -5,6 +5,8 @@ namespace App\Models;
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use App\Enums\UserRole;
 use Database\Factories\UserFactory;
+use Filament\Models\Contracts\FilamentUser;
+use Filament\Panel;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
@@ -18,7 +20,7 @@ use Spatie\Permission\Traits\HasRoles;
 
 #[Fillable(['name', 'email', 'password'])]
 #[Hidden(['password', 'remember_token'])]
-class User extends Authenticatable implements JWTSubject
+class User extends Authenticatable implements FilamentUser, JWTSubject
 {
     /** @use HasFactory<UserFactory> */
     use HasFactory, HasRoles, HasUuids, Notifiable;
@@ -54,6 +56,11 @@ class User extends Authenticatable implements JWTSubject
     public function isAdmin(): bool
     {
         return $this->hasRole(UserRole::ADMIN->value);
+    }
+
+    public function canAccessPanel(Panel $panel): bool
+    {
+        return $panel->getId() === 'admin' && $this->isAdmin();
     }
 
     public function getJWTIdentifier(): mixed
