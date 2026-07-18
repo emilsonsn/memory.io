@@ -334,14 +334,14 @@ class CategoryApiTest extends TestCase
         $firstMemory = Memory::query()->where('title', 'First note')->firstOrFail();
         $secondMemory = Memory::query()->where('title', 'Second note')->firstOrFail();
 
-        $this->assertDatabaseHas('category_memory', [
+        $this->assertDatabaseHas('memories', [
             'category_id' => $category->id,
-            'memory_id' => $firstMemory->id,
+            'id' => $firstMemory->id,
         ]);
 
-        $this->assertDatabaseHas('category_memory', [
+        $this->assertDatabaseHas('memories', [
             'category_id' => $category->id,
-            'memory_id' => $secondMemory->id,
+            'id' => $secondMemory->id,
         ]);
     }
 
@@ -404,13 +404,13 @@ class CategoryApiTest extends TestCase
             'title' => 'Root Note',
             'content' => 'Root content',
         ]);
-        $rootMemory->categories()->sync([$root->id]);
+        $rootMemory->update(['category_id' => $root->id]);
 
         $childMemory = Memory::factory()->for($user)->create([
             'title' => 'Child Note',
             'content' => 'Child content',
         ]);
-        $childMemory->categories()->sync([$child->id]);
+        $childMemory->update(['category_id' => $child->id]);
 
         $response = $this->actingAs($user, 'api')
             ->post("/api/categories/{$root->id}/export");

@@ -110,16 +110,10 @@ class CategoryExportService
 
     private function buildCategoryTree(Category $category, string $directoryPath, string $userId): void
     {
-        $memoryIds = Memory::withoutGlobalScopes()
-            ->newQuery()
-            ->join('category_memory', 'category_memory.memory_id', '=', 'memories.id')
-            ->where('category_memory.category_id', $category->id)
+        $memories = Memory::withoutGlobalScopes()
+            ->where('category_id', $category->id)
             ->where('memories.user_id', $userId)
             ->whereNull('memories.deleted_at')
-            ->pluck('memories.id');
-
-        $memories = Memory::withoutGlobalScopes()
-            ->whereIn('id', $memoryIds)
             ->get();
 
         foreach ($memories as $memory) {

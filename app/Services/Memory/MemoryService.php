@@ -46,7 +46,7 @@ class MemoryService
         return $this->memory
             ->fresh()
             ->load([
-                'categories',
+                'category',
             ]);
     }
 
@@ -84,7 +84,7 @@ class MemoryService
         $sortDirection = $this->resolveSortDirection($filters);
 
         $query = Memory::query()
-            ->with('categories');
+            ->with('category');
 
         if ($onlyTrashed) {
             $query->onlyTrashed();
@@ -114,11 +114,9 @@ class MemoryService
         })->when(! empty($filters['color']), function ($query) use ($filters) {
             $query->where('color', (string) $filters['color']);
         })->when($withoutCategories, function ($query) {
-            $query->whereDoesntHave('categories');
+            $query->whereNull('category_id');
         })->when(! $withoutCategories && is_array($categoryIds) && $categoryIds !== [], function ($query) use ($categoryIds) {
-            $query->whereHas('categories', function ($categoriesQuery) use ($categoryIds): void {
-                $categoriesQuery->whereIn('categories.id', $categoryIds);
-            });
+            $query->whereIn('category_id', $categoryIds);
         });
 
         return $query
@@ -130,18 +128,18 @@ class MemoryService
     {
         $this->planLimitService->ensureCanCreateMemory(auth()->user());
 
-        $categoryIds = $data['category_ids'] ?? [];
-        unset($data['category_ids']);
+        if (array_key_exists('category_id', $data)) {
+            $data['category_id'] = $this->resolveOwnedCategoryId($data['category_id']);
+        }
 
         $this->memory = Memory::create($data);
-        $this->syncCategories($categoryIds);
 
         $memory = $this->object();
 
         $this->audit('memory.created', $memory, [
             'old' => null,
             'new' => $this->memoryAuditSnapshot($memory),
-            'changed_fields' => ['title', 'content', 'color', 'due_date', 'category_ids'],
+            'changed_fields' => ['title', 'content', 'color', 'due_date', 'category_id'],
         ]);
 
         return $memory;
@@ -149,7 +147,7 @@ class MemoryService
 
     public function duplicate(Memory $sourceMemory): Memory
     {
-        $sourceMemory->loadMissing('categories');
+        $sourceMemory->loadMissing('category');
 
         $this->planLimitService->ensureCanCreateMemory(auth()->user());
 
@@ -158,16 +156,15 @@ class MemoryService
             'content' => $sourceMemory->content,
             'color' => $sourceMemory->color,
             'due_date' => $sourceMemory->due_date,
+            'category_id' => $sourceMemory->category_id,
         ]);
-
-        $this->syncCategories($sourceMemory->categories->pluck('id')->all());
 
         $memory = $this->object();
 
         $this->audit('memory.duplicated', $memory, [
             'old' => null,
             'new' => $this->memoryAuditSnapshot($memory),
-            'changed_fields' => ['title', 'content', 'color', 'due_date', 'category_ids'],
+            'changed_fields' => ['title', 'content', 'color', 'due_date', 'category_id'],
             'source_memory_id' => $sourceMemory->id,
         ]);
 
@@ -180,14 +177,11 @@ class MemoryService
 
         $before = $this->memoryAuditSnapshot($this->memory);
 
-        $categoryIds = $data['category_ids'] ?? null;
-        unset($data['category_ids']);
+        if (array_key_exists('category_id', $data)) {
+            $data['category_id'] = $this->resolveOwnedCategoryId($data['category_id']);
+        }
 
         $this->memory->update($data);
-
-        if ($categoryIds !== null) {
-            $this->syncCategories($categoryIds);
-        }
 
         $memory = $this->object();
         $after = $this->memoryAuditSnapshot($memory);
@@ -252,19 +246,6 @@ class MemoryService
     }
 
     /**
-     * @param  array<int, string>  $categoryIds
-     */
-    private function syncCategories(array $categoryIds): void
-    {
-        $ownedCategoryIds = Category::query()
-            ->whereIn('id', $categoryIds)
-            ->pluck('id')
-            ->all();
-
-        $this->memory->categories()->sync($ownedCategoryIds);
-    }
-
-    /**
      * @return array<string, mixed>
      */
     private function memoryAuditSnapshot(Memory $memory): array
@@ -276,11 +257,19 @@ class MemoryService
             'content' => $memory->content,
             'color' => $memory->color?->value,
             'due_date' => $dueDate?->toISOString(),
-            'category_ids' => $memory->categories()
-                ->pluck('categories.id')
-                ->values()
-                ->all(),
+            'category_id' => $memory->category_id,
         ];
+    }
+
+    private function resolveOwnedCategoryId(mixed $categoryId): ?string
+    {
+        if ($categoryId === null) {
+            return null;
+        }
+
+        return Category::query()
+            ->whereKey($categoryId)
+            ->value('id');
     }
 
     /**

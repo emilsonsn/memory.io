@@ -10,11 +10,10 @@ use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
-#[Fillable(['title', 'content', 'color', 'due_date'])]
+#[Fillable(['title', 'content', 'color', 'due_date', 'category_id'])]
 #[Hidden(['user_id'])]
 class Memory extends Model
 {
@@ -45,10 +44,9 @@ class Memory extends Model
         return $this->belongsTo(User::class);
     }
 
-    public function categories(): BelongsToMany
+    public function category(): BelongsTo
     {
-        return $this->belongsToMany(Category::class)
-            ->withTimestamps();
+        return $this->belongsTo(Category::class);
     }
 
     public function favorites(): HasMany

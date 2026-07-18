@@ -65,7 +65,7 @@ class MemoryApiTest extends TestCase
             'created_at' => '2026-05-10 09:00:00',
             'updated_at' => '2026-05-12 14:00:00',
         ]);
-        $matchingMemory->categories()->sync([$targetCategory->id]);
+        $matchingMemory->update(['category_id' => $targetCategory->id]);
 
         $wrongDueDateMemory = Memory::factory()->for($user)->create([
             'title' => 'Project kickoff draft',
@@ -75,7 +75,7 @@ class MemoryApiTest extends TestCase
             'created_at' => '2026-05-10 09:00:00',
             'updated_at' => '2026-05-12 14:00:00',
         ]);
-        $wrongDueDateMemory->categories()->sync([$targetCategory->id]);
+        $wrongDueDateMemory->update(['category_id' => $targetCategory->id]);
 
         $wrongCategoryMemory = Memory::factory()->for($user)->create([
             'title' => 'Project kickoff retrospective',
@@ -85,7 +85,7 @@ class MemoryApiTest extends TestCase
             'created_at' => '2026-05-10 09:00:00',
             'updated_at' => '2026-05-12 14:00:00',
         ]);
-        $wrongCategoryMemory->categories()->sync([$otherCategory->id]);
+        $wrongCategoryMemory->update(['category_id' => $otherCategory->id]);
 
         $otherUserMemory = Memory::factory()->for($otherUser)->create([
             'title' => 'Project kickoff private',
@@ -95,7 +95,7 @@ class MemoryApiTest extends TestCase
             'created_at' => '2026-05-10 09:00:00',
             'updated_at' => '2026-05-12 14:00:00',
         ]);
-        $otherUserMemory->categories()->sync([$externalCategory->id]);
+        $otherUserMemory->update(['category_id' => $externalCategory->id]);
 
         $query = http_build_query([
             'created_from' => '2026-05-01',
@@ -167,7 +167,7 @@ class MemoryApiTest extends TestCase
         $categorizedMemory = Memory::factory()->for($user)->create([
             'title' => 'Categorized note',
         ]);
-        $categorizedMemory->categories()->sync([$category->id]);
+        $categorizedMemory->update(['category_id' => $category->id]);
 
         Memory::factory()->for($otherUser)->create([
             'title' => 'Other loose note',
@@ -253,7 +253,7 @@ class MemoryApiTest extends TestCase
         $categorizedTrashedMemory = Memory::factory()->for($user)->create([
             'title' => 'Deleted categorized note',
         ]);
-        $categorizedTrashedMemory->categories()->sync([$category->id]);
+        $categorizedTrashedMemory->update(['category_id' => $category->id]);
         $categorizedTrashedMemory->delete();
 
         $this->actingAs($user, 'api')
@@ -375,7 +375,7 @@ class MemoryApiTest extends TestCase
             ->assertStreamedContent("Shopping list\nCoffee\nMilk\nBread");
     }
 
-    public function test_user_can_create_memory_with_categories(): void
+    public function test_user_can_create_memory_with_category(): void
     {
         $plan = Plan::factory()->create([
             'max_memories' => 100,
@@ -389,7 +389,7 @@ class MemoryApiTest extends TestCase
                 'content' => 'Remember to buy coffee tomorrow.',
                 'color' => 'purple',
                 'due_date' => now()->addDay()->toISOString(),
-                'category_ids' => [$category->id],
+                'category_id' => $category->id,
             ])
             ->assertCreated()
             ->assertJsonPath('success', true)
@@ -409,8 +409,8 @@ class MemoryApiTest extends TestCase
             'user_id' => $user->id,
         ]);
 
-        $this->assertDatabaseHas('category_memory', [
-            'memory_id' => $memory->id,
+        $this->assertDatabaseHas('memories', [
+            'id' => $memory->id,
             'category_id' => $category->id,
         ]);
 
@@ -431,10 +431,10 @@ class MemoryApiTest extends TestCase
 
         $this->assertSame('Buy coffee', data_get($activity->properties->toArray(), 'new.title'));
         $this->assertSame('purple', data_get($activity->properties->toArray(), 'new.color'));
-        $this->assertSame($category->id, data_get($activity->properties->toArray(), 'new.category_ids.0'));
+        $this->assertSame($category->id, data_get($activity->properties->toArray(), 'new.category_id'));
     }
 
-    public function test_user_can_duplicate_memory_with_categories(): void
+    public function test_user_can_duplicate_memory_with_category(): void
     {
         $plan = Plan::factory()->create([
             'max_memories' => 100,
@@ -448,7 +448,7 @@ class MemoryApiTest extends TestCase
             'color' => 'green',
             'due_date' => '2026-07-15 10:30:00',
         ]);
-        $memory->categories()->sync([$category->id]);
+        $memory->update(['category_id' => $category->id]);
 
         $this->actingAs($user, 'api')
             ->postJson("/api/memories/{$memory->id}/duplicate")
@@ -477,8 +477,8 @@ class MemoryApiTest extends TestCase
             'color' => 'green',
         ]);
 
-        $this->assertDatabaseHas('category_memory', [
-            'memory_id' => $duplicatedMemory->id,
+        $this->assertDatabaseHas('memories', [
+            'id' => $duplicatedMemory->id,
             'category_id' => $category->id,
         ]);
 
@@ -499,7 +499,7 @@ class MemoryApiTest extends TestCase
 
         $this->assertSame($memory->id, data_get($activity->properties->toArray(), 'source_memory_id'));
         $this->assertSame('Original memory', data_get($activity->properties->toArray(), 'new.title'));
-        $this->assertSame($category->id, data_get($activity->properties->toArray(), 'new.category_ids.0'));
+        $this->assertSame($category->id, data_get($activity->properties->toArray(), 'new.category_id'));
     }
 
     public function test_user_cannot_duplicate_another_users_memory(): void
@@ -545,10 +545,10 @@ class MemoryApiTest extends TestCase
                 'title' => 'Buy tea',
                 'content' => 'Remember to buy tea tomorrow.',
                 'due_date' => now()->addDay()->toISOString(),
-                'category_ids' => [$otherUsersCategory->id],
+                'category_id' => $otherUsersCategory->id,
             ])
             ->assertUnprocessable()
-            ->assertJsonValidationErrors('category_ids.0');
+            ->assertJsonValidationErrors('category_id');
     }
 
     public function test_user_can_update_and_delete_memory(): void

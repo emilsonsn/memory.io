@@ -37,7 +37,7 @@ class MemoryServiceTest extends TestCase
         ]);
     }
 
-    public function test_it_syncs_only_owned_categories(): void
+    public function test_it_assigns_only_an_owned_category(): void
     {
         $plan = Plan::factory()->create([
             'max_memories' => 100,
@@ -52,21 +52,21 @@ class MemoryServiceTest extends TestCase
         $memory = app(MemoryService::class)->create([
             'title' => 'Plan trip',
             'content' => 'Pick destination and dates.',
-            'category_ids' => [
-                $ownedCategory->id,
-                $otherUsersCategory->id,
-            ],
-        ]);
-
-        $this->assertDatabaseHas('category_memory', [
-            'memory_id' => $memory->id,
             'category_id' => $ownedCategory->id,
         ]);
 
-        $this->assertDatabaseMissing('category_memory', [
-            'memory_id' => $memory->id,
+        $this->assertDatabaseHas('memories', [
+            'id' => $memory->id,
+            'category_id' => $ownedCategory->id,
+        ]);
+
+        $otherMemory = app(MemoryService::class)->create([
+            'title' => 'Private category',
+            'content' => 'Must not attach another user category.',
             'category_id' => $otherUsersCategory->id,
         ]);
+
+        $this->assertNull($otherMemory->category_id);
     }
 
     public function test_it_duplicates_memory_with_categories_for_authenticated_user(): void
@@ -82,7 +82,7 @@ class MemoryServiceTest extends TestCase
             'color' => 'blue',
             'due_date' => '2026-07-15 10:30:00',
         ]);
-        $memory->categories()->sync([$category->id]);
+        $memory->update(['category_id' => $category->id]);
 
         $this->actingAs($user);
 
@@ -94,8 +94,8 @@ class MemoryServiceTest extends TestCase
         $this->assertSame('blue', $duplicatedMemory->color->value);
         $this->assertSame($user->id, $duplicatedMemory->user_id);
 
-        $this->assertDatabaseHas('category_memory', [
-            'memory_id' => $duplicatedMemory->id,
+        $this->assertDatabaseHas('memories', [
+            'id' => $duplicatedMemory->id,
             'category_id' => $category->id,
         ]);
     }

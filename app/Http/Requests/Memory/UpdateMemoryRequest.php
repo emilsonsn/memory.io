@@ -25,10 +25,10 @@ class UpdateMemoryRequest extends FormRequest
             'content' => ['sometimes', 'required', 'string'],
             'color' => ['sometimes', 'nullable', Rule::in(NoteColor::values())],
             'due_date' => ['sometimes', 'nullable', 'date'],
-            'category_ids' => ['sometimes', 'array'],
-            'category_ids.*' => [
+            'category_id' => [
+                'sometimes',
+                'nullable',
                 'uuid',
-                'distinct',
                 Rule::exists('categories', 'id')->where('user_id', auth()->id()),
             ],
         ];

@@ -25,10 +25,10 @@ class StoreMemoryRequest extends FormRequest
             'content' => ['required', 'string'],
             'color' => ['sometimes', 'nullable', Rule::in(NoteColor::values())],
             'due_date' => ['nullable', 'date', 'after:now'],
-            'category_ids' => ['sometimes', 'array'],
-            'category_ids.*' => [
+            'category_id' => [
+                'sometimes',
+                'nullable',
                 'uuid',
-                'distinct',
                 Rule::exists('categories', 'id')->where('user_id', auth()->id()),
             ],
         ];
