@@ -3212,12 +3212,12 @@
                         ],
                         "format": "date-time"
                     },
-                    "category_ids": {
-                        "type": "array",
-                        "items": {
-                            "type": "string",
-                            "format": "uuid"
-                        }
+                    "category_id": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "uuid"
                     }
                 },
                 "required": [
@@ -3368,12 +3368,12 @@
                         ],
                         "format": "date-time"
                     },
-                    "category_ids": {
-                        "type": "array",
-                        "items": {
-                            "type": "string",
-                            "format": "uuid"
-                        }
+                    "category_id": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "uuid"
                     }
                 },
                 "title": "UpdateMemoryRequest"

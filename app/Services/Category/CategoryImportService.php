@@ -26,7 +26,7 @@ class CategoryImportService
                 $memories[] = $this->memoryService->create([
                     'title' => $this->titleFromFile($file),
                     'content' => $this->contentFromFile($file),
-                    'category_ids' => [$category->id],
+                    'category_id' => $category->id,
                 ]);
             }
 

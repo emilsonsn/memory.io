@@ -10,7 +10,6 @@ use App\Models\Memory;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Carbon;
-use Illuminate\Support\Facades\DB;
 
 class DeleteExpiredMemoriesJob implements ShouldQueue
 {
@@ -28,10 +27,7 @@ class DeleteExpiredMemoriesJob implements ShouldQueue
                     'title' => $memory->title,
                     'content' => $memory->content,
                     'due_date' => $memory->due_date?->toISOString(),
-                    'category_ids' => DB::table('category_memory')
-                        ->where('memory_id', $memory->id)
-                        ->pluck('category_id')
-                        ->all(),
+                    'category_id' => $memory->category_id,
                 ];
 
                 $memory->delete();

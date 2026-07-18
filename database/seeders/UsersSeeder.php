@@ -14,7 +14,7 @@ class UsersSeeder extends Seeder
      */
     public function run(): void
     {
-        $defaultPassword = '@123Mudar';
+        $defaultPassword = env('DEFAULT_PASSWORD');
 
         $users = [
             [

@@ -10,7 +10,6 @@ use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 #[Fillable(['label', 'description', 'color', 'parent_id'])]
@@ -36,10 +35,9 @@ class Category extends Model
         return $this->hasMany(self::class, 'parent_id');
     }
 
-    public function memories(): BelongsToMany
+    public function memories(): HasMany
     {
-        return $this->belongsToMany(Memory::class)
-            ->withTimestamps();
+        return $this->hasMany(Memory::class);
     }
 
     public function favorites(): HasMany

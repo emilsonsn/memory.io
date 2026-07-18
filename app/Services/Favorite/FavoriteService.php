@@ -13,7 +13,7 @@ class FavoriteService
     public function getAll(int $perPage = 15): LengthAwarePaginator
     {
         return Favorite::query()
-            ->with(['memory.categories', 'category.parent'])
+            ->with(['memory.category', 'category.parent'])
             ->latest()
             ->paginate($perPage);
     }
@@ -31,7 +31,7 @@ class FavoriteService
             'category_id' => $data['category_id'] ?? null,
         ]);
 
-        return $favorite->fresh()->load(['memory.categories', 'category.parent']);
+        return $favorite->fresh()->load(['memory.category', 'category.parent']);
     }
 
     /**
