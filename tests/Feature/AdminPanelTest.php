@@ -3,12 +3,14 @@
 namespace Tests\Feature;
 
 use App\Enums\UserRole;
+use App\Filament\Resources\Users\Pages\ListUsers;
 use App\Models\Category;
 use App\Models\Memory;
 use App\Models\User;
 use Database\Seeders\RolesAndPermissionsSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Route;
+use Livewire\Livewire;
 use Tests\TestCase;
 
 class AdminPanelTest extends TestCase
@@ -76,14 +78,12 @@ class AdminPanelTest extends TestCase
         Memory::factory()->for($user)->count(3)->create();
         Category::factory()->for($user)->count(2)->create();
 
-        $this->actingAs($admin)
-            ->get('/admin/users')
-            ->assertOk()
-            ->assertSee('Memórias')
-            ->assertSee('Categorias')
-            ->assertSee('Usuário com conteúdo')
-            ->assertSee('3')
-            ->assertSee('2');
+        $this->actingAs($admin);
+
+        Livewire::test(ListUsers::class)
+            ->assertCanSeeTableRecords([$user])
+            ->assertTableColumnStateSet('memories_count', 3, $user)
+            ->assertTableColumnStateSet('categories_count', 2, $user);
     }
 
     public function test_panel_does_not_register_memory_or_category_resources(): void

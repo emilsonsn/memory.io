@@ -6,6 +6,7 @@ use Filament\Actions\EditAction;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 
 class UsersTable
 {
@@ -30,11 +31,17 @@ class UsersTable
                     ->badge(),
                 TextColumn::make('memories_count')
                     ->label('Memórias')
-                    ->counts('memories')
+                    ->counts([
+                        'memories' => fn (Builder $query): Builder => $query
+                            ->withoutGlobalScope('owned_by_authenticated_user'),
+                    ])
                     ->sortable(),
                 TextColumn::make('categories_count')
                     ->label('Categorias')
-                    ->counts('categories')
+                    ->counts([
+                        'categories' => fn (Builder $query): Builder => $query
+                            ->withoutGlobalScope('owned_by_authenticated_user'),
+                    ])
                     ->sortable(),
                 TextColumn::make('created_at')
                     ->label('Criado em')
