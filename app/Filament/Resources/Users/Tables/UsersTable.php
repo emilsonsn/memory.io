@@ -28,6 +28,14 @@ class UsersTable
                 TextColumn::make('roles.name')
                     ->label('Papéis')
                     ->badge(),
+                TextColumn::make('memories_count')
+                    ->label('Memórias')
+                    ->counts('memories')
+                    ->sortable(),
+                TextColumn::make('categories_count')
+                    ->label('Categorias')
+                    ->counts('categories')
+                    ->sortable(),
                 TextColumn::make('created_at')
                     ->label('Criado em')
                     ->dateTime('d/m/Y H:i')

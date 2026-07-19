@@ -3,6 +3,8 @@
 namespace Tests\Feature;
 
 use App\Enums\UserRole;
+use App\Models\Category;
+use App\Models\Memory;
 use App\Models\User;
 use Database\Seeders\RolesAndPermissionsSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -58,6 +60,30 @@ class AdminPanelTest extends TestCase
         $this->actingAs($admin)
             ->get('/admin/plans/create')
             ->assertOk();
+    }
+
+    public function test_user_listing_shows_memory_and_category_counts(): void
+    {
+        $this->seed(RolesAndPermissionsSeeder::class);
+
+        $admin = User::factory()->create();
+        $admin->assignRole(UserRole::ADMIN->value);
+
+        $user = User::factory()->create([
+            'name' => 'Usuário com conteúdo',
+        ]);
+
+        Memory::factory()->for($user)->count(3)->create();
+        Category::factory()->for($user)->count(2)->create();
+
+        $this->actingAs($admin)
+            ->get('/admin/users')
+            ->assertOk()
+            ->assertSee('Memórias')
+            ->assertSee('Categorias')
+            ->assertSee('Usuário com conteúdo')
+            ->assertSee('3')
+            ->assertSee('2');
     }
 
     public function test_panel_does_not_register_memory_or_category_resources(): void
